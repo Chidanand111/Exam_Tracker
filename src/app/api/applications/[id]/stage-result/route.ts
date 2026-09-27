@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { advanceStageOutcome } from "@/lib/stage-engine";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await getCurrentUser();

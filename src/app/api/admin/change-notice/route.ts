@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { recordOfficialChange } from "@/lib/source-monitor";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
