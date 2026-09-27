@@ -1,0 +1,542 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ExternalLink,
+  BookmarkCheck,
+  CheckCircle2,
+  Calendar,
+  Users,
+  GraduationCap,
+  Building2,
+  IndianRupee,
+  FileText,
+  AlertTriangle,
+  Clock,
+  Award,
+  Layers,
+  ShieldCheck,
+  ChevronRight,
+  Download,
+} from "lucide-react";
+import { RecruitmentItem } from "@/types";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { SalaryBadge } from "@/components/ui/SalaryBadge";
+import { DynamicStageTimeline } from "@/components/stages/DynamicStageTimeline";
+
+export default function RecruitmentDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
+
+  const [recruitment, setRecruitment] = useState<RecruitmentItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isApplied, setIsApplied] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [regNo, setRegNo] = useState("");
+  const [rollNo, setRollNo] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchRecruitment();
+    checkIfApplied();
+  }, [id]);
+
+  const fetchRecruitment = async () => {
+    try {
+      const res = await fetch(`/api/recruitments/${id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setRecruitment(data.recruitment);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkIfApplied = async () => {
+    try {
+      const res = await fetch("/api/applications");
+      if (res.ok) {
+        const data = await res.json();
+        const found = (data.applications || []).some((a: any) => a.recruitmentId === id);
+        setIsApplied(found);
+      }
+    } catch {
+      // not logged in or error
+    }
+  };
+
+  const handleApplyOfficially = () => {
+    if (recruitment?.officialApplyUrl) {
+      window.open(recruitment.officialApplyUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleMarkApplied = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recruitmentId: id,
+          registrationNumber: regNo || undefined,
+          rollNumber: rollNo || undefined,
+          notes: notes || undefined,
+        }),
+      });
+
+      if (res.ok) {
+        setIsApplied(true);
+        setShowApplyModal(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-6 animate-pulse">
+        <div className="h-8 w-1/3 bg-slate-800 rounded-xl" />
+        <div className="h-64 bg-slate-900 rounded-3xl border border-slate-800" />
+      </div>
+    );
+  }
+
+  if (!recruitment) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
+        <h2 className="text-xl font-bold text-white">Recruitment Not Found</h2>
+        <p className="text-xs text-slate-400">The requested recruitment does not exist in our verified database.</p>
+        <Link href="/discover" className="inline-block px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold">
+          Return to Discovery
+        </Link>
+      </div>
+    );
+  }
+
+  const examPattern = recruitment.examPatternJson
+    ? JSON.parse(recruitment.examPatternJson)
+    : [];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-xs text-slate-400">
+        <Link href="/" className="hover:text-white">Home</Link>
+        <ChevronRight className="w-3.5 h-3.5" />
+        <Link href="/discover" className="hover:text-white">Recruitments</Link>
+        <ChevronRight className="w-3.5 h-3.5" />
+        <span className="text-slate-300 truncate max-w-xs">{recruitment.title}</span>
+      </nav>
+
+      {/* Hero Header Card */}
+      <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-xs px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+                {recruitment.organization.shortName} • {recruitment.organization.category}
+              </span>
+              <StatusBadge status={recruitment.status} />
+              {recruitment.fresherEligible && (
+                <span className="font-bold text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Freshers Eligible</span>
+                </span>
+              )}
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-snug">
+              {recruitment.title}
+            </h1>
+
+            <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
+              {recruitment.shortDescription}
+            </p>
+
+            <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
+              {recruitment.notificationNumber && (
+                <span>Notice No: <strong className="text-slate-300">{recruitment.notificationNumber}</strong></span>
+              )}
+              <span>Last Verified: <strong className="text-slate-300">{new Date(recruitment.lastOfficialVerifiedAt).toLocaleDateString()}</strong></span>
+            </div>
+          </div>
+
+          {/* Sticky/Fixed Actions Bar on Header */}
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 min-w-[240px] shrink-0">
+            <button
+              onClick={handleApplyOfficially}
+              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.02]"
+              title={`Direct official website: ${recruitment.officialApplyUrl}`}
+            >
+              <span>Apply Officially</span>
+              <ExternalLink className="w-4 h-4 text-blue-200" />
+            </button>
+
+            {isApplied ? (
+              <Link
+                href="/my-exams"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold hover:bg-emerald-600/30 transition-colors"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>✓ Tracking Application</span>
+              </Link>
+            ) : (
+              <button
+                onClick={() => setShowApplyModal(true)}
+                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-bold transition-colors"
+              >
+                <BookmarkCheck className="w-4 h-4 text-blue-400" />
+                <span>I've Applied</span>
+              </button>
+            )}
+
+            <a
+              href={recruitment.officialNotificationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs text-slate-400 hover:text-white font-medium"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Official Notification PDF</span>
+              <ExternalLink className="w-3 h-3 text-slate-500" />
+            </a>
+          </div>
+        </div>
+
+        {/* Change History Corrigendum Banner (Feature 15: Change Detection) */}
+        {recruitment.changeHistory && recruitment.changeHistory.length > 0 && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2">
+            <div className="flex items-center gap-2 font-bold text-amber-300 text-sm">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Official Corrigendum / Notification Updates Detected</span>
+            </div>
+            {recruitment.changeHistory.map((ch) => (
+              <div key={ch.id} className="pl-6 text-xs text-amber-200/90 leading-relaxed">
+                <span className="font-semibold text-white">⚠ {ch.changedField} Updated: </span>
+                <span className="line-through text-amber-400/80 mr-2">Old: {ch.oldValue}</span>
+                <span className="font-bold text-emerald-400">New: {ch.newValue}</span>
+                {ch.changeReason && <span className="text-amber-300/80 ml-2">({ch.changeReason})</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Grid of Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column (2 cols): Stages, Syllabus, Pattern */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Dynamic Stages Section */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800">
+            <DynamicStageTimeline
+              stages={recruitment.stages}
+              isApplied={isApplied}
+            />
+          </div>
+
+          {/* Job Description & Posts */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-blue-400" />
+              <span>Posts, Vacancies & Department Breakdown</span>
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {recruitment.fullDescription}
+            </p>
+
+            {recruitment.posts && recruitment.posts.length > 0 && (
+              <div className="overflow-x-auto mt-4">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                      <th className="py-2.5 px-3">Post Name</th>
+                      <th className="py-2.5 px-3">Department</th>
+                      <th className="py-2.5 px-3">Vacancies</th>
+                      <th className="py-2.5 px-3">Qualification</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {recruitment.posts.map((post) => (
+                      <tr key={post.id} className="hover:bg-slate-800/30">
+                        <td className="py-2.5 px-3 font-semibold text-white">{post.postName}</td>
+                        <td className="py-2.5 px-3 text-slate-300">{post.department || "Not specified"}</td>
+                        <td className="py-2.5 px-3 text-blue-400 font-bold">
+                          {post.vacancies ? post.vacancies.toLocaleString() : "Not specified"}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-400">{post.qualifications}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Exam Pattern & Syllabus */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <FileText className="w-4 h-4 text-blue-400" />
+              <span>Exam Pattern & Selection Scheme</span>
+            </h3>
+
+            {recruitment.selectionProcessSummary && (
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+                <span className="font-semibold text-slate-300 block mb-1">Selection Scheme:</span>
+                <p className="text-slate-400 leading-relaxed">{recruitment.selectionProcessSummary}</p>
+              </div>
+            )}
+
+            {examPattern.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                      <th className="py-2.5 px-3">Section / Subject</th>
+                      <th className="py-2.5 px-3">Questions</th>
+                      <th className="py-2.5 px-3">Maximum Marks</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {examPattern.map((p: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-800/30">
+                        <td className="py-2.5 px-3 font-medium text-white">{p.section}</td>
+                        <td className="py-2.5 px-3 text-slate-300">{p.questions}</td>
+                        <td className="py-2.5 px-3 text-emerald-400 font-bold">{p.marks}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {recruitment.syllabusSummary && (
+              <div className="pt-2 text-xs text-slate-400 leading-relaxed">
+                <span className="font-semibold text-slate-300 block mb-1">Syllabus Overview:</span>
+                <p>{recruitment.syllabusSummary}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column (1 col): Key Parameters & Dates */}
+        <div className="space-y-6">
+          {/* Important Dates Box */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-blue-400" />
+              <span>Important Dates</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between py-2 border-b border-slate-800/80">
+                <span className="text-slate-400">Applications Open</span>
+                <span className="font-semibold text-white">
+                  {recruitment.appStartDate
+                    ? new Date(recruitment.appStartDate).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Not specified"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-800/80">
+                <span className="text-slate-400">Application Deadline</span>
+                <span className="font-bold text-amber-400">
+                  {recruitment.appDeadline
+                    ? new Date(recruitment.appDeadline).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Not specified"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-800/80">
+                <span className="text-slate-400">Admit Card Status</span>
+                <span className="font-semibold text-slate-200">
+                  {recruitment.status === "ADMIT_CARD_OUT" ? "Available Now" : "Not Announced"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Eligibility & Age Limits */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <GraduationCap className="w-4 h-4 text-emerald-400" />
+              <span>Eligibility & Age Criteria</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="text-slate-400 text-[11px] block">Educational Qualifications:</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {recruitment.qualifications.map((q) => (
+                    <span
+                      key={q.id}
+                      className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 font-medium border border-slate-700"
+                    >
+                      {q.qualificationCode.replace("_", " ")}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="py-2 border-t border-slate-800/80">
+                <span className="text-slate-400 text-[11px] block">Age Limit:</span>
+                <span className="font-semibold text-white">
+                  {recruitment.minAge && recruitment.maxAge
+                    ? `${recruitment.minAge} to ${recruitment.maxAge} Years`
+                    : "Not specified"}
+                </span>
+              </div>
+
+              {recruitment.ageRelaxationDetails && (
+                <div className="py-2 border-t border-slate-800/80">
+                  <span className="text-slate-400 text-[11px] block">Age Relaxation:</span>
+                  <span className="text-slate-300 leading-relaxed text-[11px]">
+                    {recruitment.ageRelaxationDetails}
+                  </span>
+                </div>
+              )}
+
+              <div className="py-2 border-t border-slate-800/80">
+                <span className="text-slate-400 text-[11px] block">Experience Requirement:</span>
+                <span className="font-semibold text-emerald-400">
+                  {recruitment.fresherEligible ? "No experience required (Freshers Eligible)" : recruitment.experienceReq || "Experience Required"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Salary & Emoluments */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <IndianRupee className="w-4 h-4 text-emerald-400" />
+              <span>Salary & Emoluments</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <SalaryBadge
+                payScale={recruitment.payScale}
+                inHandMin={recruitment.inHandSalaryMin}
+                inHandMax={recruitment.inHandSalaryMax}
+              />
+
+              {recruitment.allowances && (
+                <div className="pt-2 text-[11px] text-slate-400 leading-relaxed">
+                  <span className="font-semibold text-slate-300 block mb-1">Applicable Allowances:</span>
+                  <p>{recruitment.allowances}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Application Fee */}
+          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-3 text-xs">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              Application Fee
+            </h3>
+            <div className="flex items-center justify-between py-1 border-b border-slate-800">
+              <span className="text-slate-400">General / OBC / EWS</span>
+              <span className="font-semibold text-white">
+                {recruitment.appFeeGeneral !== null ? `₹${recruitment.appFeeGeneral}` : "Not specified"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-slate-400">SC / ST / PwD / Women</span>
+              <span className="font-semibold text-emerald-400">
+                {recruitment.appFeeReserved !== null ? (recruitment.appFeeReserved === 0 ? "Exempted (₹0)" : `₹${recruitment.appFeeReserved}`) : "Not specified"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal for "I've Applied" */}
+      {showApplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl glass-panel bg-slate-900 border border-slate-700 shadow-2xl p-6">
+            <h3 className="text-base font-bold text-white">Track Your Application</h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Add {recruitment.title} to your personal dashboard to track dynamic exam stages, shift assignments, and admit cards.
+            </p>
+
+            <form onSubmit={handleMarkApplied} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Registration / Application Number (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. SSC2026CGL984210"
+                  value={regNo}
+                  onChange={(e) => setRegNo(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Roll Number (If allotted)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 2201048892"
+                  value={rollNo}
+                  onChange={(e) => setRollNo(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Personal Target / Notes
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Target Post: Inspector of Income Tax"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowApplyModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300 hover:bg-slate-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/30 transition-colors"
+                >
+                  {submitting ? "Adding..." : "Add to My Exams"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

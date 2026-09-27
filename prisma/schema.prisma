@@ -1,0 +1,266 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         String        @default("USER") // "USER" | "ADMIN"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  applications UserApplication[]
+  reminders    Reminder[]
+  notifications Notification[]
+}
+
+model Organization {
+  id              String        @id @default(cuid())
+  name            String
+  shortName       String        @unique // e.g. "SSC", "IBPS", "UPSC", "RRB", "ISRO", "SBI"
+  category        String        // "CENTRAL", "BANKING", "RAILWAY", "DEFENCE", "PSU", "STATE_PSC", "REGULATORY"
+  officialWebsite String
+  logoUrl         String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  recruitments    Recruitment[]
+  sources         OfficialSource[]
+}
+
+model Recruitment {
+  id                    String                   @id @default(cuid())
+  orgId                 String
+  organization          Organization             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title                 String                   // e.g. "SSC Combined Graduate Level (CGL) 2026"
+  notificationNumber    String?                  // e.g. "F.No. HQ-PPII03/1/2026-PP_II"
+  shortDescription      String
+  fullDescription       String
+  vacancies             Int?                     // null if not announced
+  totalVacanciesNote    String?
+  fresherEligible       Boolean                  @default(true)
+  experienceReq         String?                  // "None", or details
+  minAge                Int?
+  maxAge                Int?
+  ageRelaxationDetails  String?
+  payScale              String                   // e.g. "Pay Level-7 (₹44,900 to ₹1,42,400)"
+  inHandSalaryMin       Int?                     // e.g. 58000
+  inHandSalaryMax       Int?                     // e.g. 72000
+  allowances            String?                  // DA, HRA, Transport Allowance, CGHS
+  appStartDate          DateTime?
+  appDeadline           DateTime?
+  appFeeGeneral         Int?
+  appFeeReserved        Int?                     // For SC/ST/PwD/Women
+  officialNotificationUrl String
+  officialApplyUrl      String
+  officialAdmitCardUrl  String?
+  officialResultUrl     String?
+  status                String                   @default("ACTIVE") // "ACTIVE", "CLOSING_SOON", "EXAM_SCHEDULED", "ADMIT_CARD_OUT", "RESULT_OUT", "COMPLETED", "CANCELLED"
+  stateLocation         String?                  @default("All India")
+  syllabusSummary       String?
+  examPatternJson       String?                  // JSON array of sections/marks/duration
+  selectionProcessSummary String?
+  lastOfficialVerifiedAt DateTime                @default(now())
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  posts                 RecruitmentPost[]
+  qualifications        RecruitmentQualification[]
+  stages                RecruitmentStage[]
+  applications          UserApplication[]
+  changeHistory         ChangeHistory[]
+  documents             SourceDocument[]
+}
+
+model RecruitmentPost {
+  id                String       @id @default(cuid())
+  recruitmentId     String
+  recruitment       Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  postName          String       // e.g. "Assistant Section Officer (CSS)"
+  postCode          String?
+  vacancies         Int?
+  department        String?
+  qualifications    String       // JSON or comma-separated
+  branchRequirements String?
+}
+
+model RecruitmentQualification {
+  id                String       @id @default(cuid())
+  recruitmentId     String
+  recruitment       Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  qualificationCode String       // "ANY_GRADUATE", "BA", "BCOM", "BSC", "BTECH", "BE", "BCA", "MCA", "MBA", "OTHER"
+  stream            String?
+}
+
+model RecruitmentStage {
+  id               String              @id @default(cuid())
+  recruitmentId    String
+  recruitment      Recruitment         @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  stageOrder       Int                 // 1, 2, 3... Completely generic
+  stageName        String              // "Tier 1", "Mains", "CBT 1", "Phase I", "Skill Test", "Interview", etc.
+  description      String?
+  eligibilityNote  String?
+  admitCardUrl     String?
+  resultUrl        String?
+  admitCardStatus  String              @default("NOT_ANNOUNCED") // "NOT_ANNOUNCED", "UPCOMING", "RELEASED"
+  resultStatus     String              @default("NOT_ANNOUNCED") // "NOT_ANNOUNCED", "UPCOMING", "RELEASED"
+  status           String              @default("SCHEDULED")     // "SCHEDULED", "ONGOING", "COMPLETED"
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  schedules        StageSchedule[]
+  userProgress     UserStageProgress[]
+}
+
+model StageSchedule {
+  id             String            @id @default(cuid())
+  stageId        String
+  stage          RecruitmentStage  @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  examDate       DateTime
+  shiftNumber    Int               // 1, 2, 3
+  shiftName      String            // "Shift 1 (Morning)", "Shift 2 (Afternoon)"
+  startTime      String            // "09:00 AM"
+  endTime        String            // "10:00 AM"
+  reportingTime  String?           // "07:30 AM"
+  instructions   String?
+}
+
+model UserApplication {
+  id                 String              @id @default(cuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recruitmentId      String
+  recruitment        Recruitment         @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  appliedDate        DateTime            @default(now())
+  registrationNumber String?
+  rollNumber         String?
+  currentStageOrder  Int                 @default(1)
+  overallStatus      String              @default("APPLIED") // "APPLIED", "IN_PROGRESS", "SELECTED_STAGE", "FINAL_SELECTED", "NOT_SELECTED", "WITHDRAWN"
+  notes              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  stageProgress      UserStageProgress[]
+  reminders          Reminder[]
+
+  @@unique([userId, recruitmentId])
+}
+
+model UserStageProgress {
+  id               String            @id @default(cuid())
+  applicationId    String
+  application      UserApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  stageId          String
+  stage            RecruitmentStage  @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  status           String            @default("PENDING") // "PENDING", "ADMIT_CARD_AVAILABLE", "EXAM_SCHEDULED", "EXAM_COMPLETED", "RESULT_AVAILABLE", "SELECTED_FOR_NEXT", "NOT_SELECTED", "FINAL_SELECTED"
+  outcome          String?           // "SELECTED_FOR_NEXT", "NOT_SELECTED", "FINAL_SELECTED", "AWAITED"
+  userNotes        String?
+  completedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  examSchedule     UserExamSchedule?
+
+  @@unique([applicationId, stageId])
+}
+
+model UserExamSchedule {
+  id                 String            @id @default(cuid())
+  stageProgressId    String            @unique
+  stageProgress      UserStageProgress @relation(fields: [stageProgressId], references: [id], onDelete: Cascade)
+  selectedScheduleId String?           // ID of the official StageSchedule chosen, or null if custom
+  examDate           DateTime
+  shiftName          String            // e.g. "Shift 2 (Afternoon)"
+  examTime           String            // e.g. "02:30 PM - 03:30 PM"
+  reportingTime      String?           // e.g. "01:00 PM"
+  examCenterName     String?           // e.g. "iON Digital Zone, Sector 62, Noida"
+  centerAddress      String?
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model Reminder {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   UserApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  stageId       String?
+  reminderType  String           // "APP_DEADLINE", "EXAM_DATE", "REPORTING_TIME", "ADMIT_CARD", "RESULT", "NEXT_ROUND", "CUSTOM"
+  title         String
+  scheduledFor  DateTime
+  presetOption  String?          // "7_DAYS_BEFORE", "3_DAYS_BEFORE", "1_DAY_BEFORE", "CUSTOM"
+  isTriggered   Boolean          @default(false)
+  isDismissed   Boolean          @default(false)
+  channel       String           @default("IN_APP") // "IN_APP", "EMAIL", "PUSH", "TELEGRAM"
+  createdAt     DateTime         @default(now())
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String?
+  title         String
+  message       String
+  type          String           @default("INFO") // "INFO", "ALERT", "SUCCESS", "WARNING"
+  linkUrl       String?
+  isRead        Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+}
+
+model OfficialSource {
+  id                    String           @id @default(cuid())
+  name                  String           // e.g. "Staff Selection Commission Official Portal"
+  code                  String           @unique // e.g. "SSC_CENTRAL"
+  category              String           // "CENTRAL", "BANKING", "RAILWAY", "DEFENCE", "PSU", "STATE_PSC"
+  url                   String           // e.g. "https://ssc.gov.in"
+  listUrl               String           // Notice board URL
+  checkFrequencyMinutes Int              @default(360)
+  lastCheckedAt         DateTime?
+  status                String           @default("HEALTHY") // "HEALTHY", "WARNING", "ERROR"
+  failureCount          Int              @default(0)
+  orgId                 String?
+  organization          Organization?    @relation(fields: [orgId], references: [id])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  documents             SourceDocument[]
+}
+
+model SourceDocument {
+  id               String          @id @default(cuid())
+  sourceId         String
+  source           OfficialSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  recruitmentId    String?
+  recruitment      Recruitment?    @relation(fields: [recruitmentId], references: [id], onDelete: SetNull)
+  documentUrl      String
+  docType          String          // "NOTIFICATION_PDF", "ADMIT_CARD_NOTICE", "RESULT_PDF", "CORRIGENDUM"
+  extractedText    String?
+  hash             String          // SHA-256 for change detection
+  processingStatus String          @default("PENDING") // "PENDING", "EXTRACTED", "REVIEW_REQUIRED", "APPROVED", "REJECTED"
+  aiExtractedJson  String?         // Structured JSON extracted by AI
+  confidenceScore  Float?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model ChangeHistory {
+  id            String       @id @default(cuid())
+  recruitmentId String
+  recruitment   Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  changedField  String       // e.g. "appDeadline", "vacancies", "examDate"
+  oldValue      String
+  newValue      String
+  changeReason  String?      // e.g. "Official Corrigendum Notice No. 4/2026"
+  detectedAt    DateTime     @default(now())
+}
