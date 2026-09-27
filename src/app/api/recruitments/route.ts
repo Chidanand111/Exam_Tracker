@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search")?.toLowerCase().trim();
+    const search = searchParams.get("search")?.trim();
     const qualification = searchParams.get("qualification");
     const fresherOnly = searchParams.get("fresher") === "true";
     const experienceRequired = searchParams.get("experience") === "true";
@@ -16,54 +16,86 @@ export async function GET(req: Request) {
     const status = searchParams.get("status");
     const sortBy = searchParams.get("sort") || "newest";
 
-    // Build Prisma query filter
+    const andConditions: any[] = [];
     const where: any = {};
 
-    if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { shortDescription: { contains: search } },
-        { organization: { name: { contains: search } } },
-        { organization: { shortName: { contains: search } } },
-        { posts: { some: { postName: { contains: search } } } },
-      ];
+    // 1. Search Query: Case-insensitive across title, description, org name, and posts
+    if (search && search.length > 0) {
+      andConditions.push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { shortDescription: { contains: search, mode: "insensitive" } },
+          { fullDescription: { contains: search, mode: "insensitive" } },
+          { organization: { name: { contains: search, mode: "insensitive" } } },
+          { organization: { shortName: { contains: search, mode: "insensitive" } } },
+          { posts: { some: { postName: { contains: search, mode: "insensitive" } } } },
+          { posts: { some: { department: { contains: search, mode: "insensitive" } } } },
+          { qualifications: { some: { qualificationCode: { contains: search, mode: "insensitive" } } } },
+        ],
+      });
     }
 
+    // 2. Fresher Eligibility
     if (fresherOnly) {
       where.fresherEligible = true;
-    }
-
-    if (experienceRequired) {
+    } else if (experienceRequired) {
       where.fresherEligible = false;
     }
 
-    if (ageMax !== null) {
-      where.minAge = { lte: ageMax };
+    // 3. User Age Eligibility (user of age ageMax should be eligible within minAge and maxAge)
+    if (ageMax !== null && ageMax > 0 && ageMax < 45) {
+      andConditions.push({
+        AND: [
+          {
+            OR: [{ minAge: { lte: ageMax } }, { minAge: null }],
+          },
+          {
+            OR: [{ maxAge: { gte: ageMax } }, { maxAge: null }],
+          },
+        ],
+      });
     }
 
-    if (salaryMin !== null) {
-      where.OR = [
-        { inHandSalaryMin: { gte: salaryMin } },
-        { inHandSalaryMax: { gte: salaryMin } },
-      ];
+    // 4. In-Hand Salary Minimum
+    if (salaryMin !== null && salaryMin > 0) {
+      andConditions.push({
+        OR: [
+          { inHandSalaryMin: { gte: salaryMin } },
+          { inHandSalaryMax: { gte: salaryMin } },
+        ],
+      });
     }
 
+    // 5. Category Filter
     if (category && category !== "ALL") {
-      where.organization = {
-        category: category,
-      };
+      if (category === "DEFENCE") {
+        where.organization = {
+          OR: [{ category: "DEFENCE" }, { shortName: "ISRO" }, { shortName: "DRDO" }],
+        };
+      } else {
+        where.organization = {
+          category: category,
+        };
+      }
     }
 
+    // 6. Status Filter
     if (status && status !== "ALL") {
       where.status = status;
     }
 
+    // 7. Qualification Filter
     if (qualification && qualification !== "ALL") {
       where.qualifications = {
         some: {
           qualificationCode: { in: [qualification, "ANY_GRADUATE"] },
         },
       };
+    }
+
+    // Combine AND conditions
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     // Determine ordering
@@ -97,8 +129,8 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ recruitments });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Recruitment fetch error:", error);
-    return NextResponse.json({ error: "Failed to load recruitments" }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Failed to load recruitments" }, { status: 500 });
   }
 }

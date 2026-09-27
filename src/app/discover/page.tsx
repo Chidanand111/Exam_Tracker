@@ -86,6 +86,9 @@ function DiscoverContent() {
       status: "ALL",
       sortBy: "newest",
     });
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", "/discover");
+    }
   };
 
   return (
