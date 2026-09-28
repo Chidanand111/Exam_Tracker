@@ -18,6 +18,7 @@ function DiscoverContent() {
     ageMax: searchParams.get("ageMax") ? parseInt(searchParams.get("ageMax")!) : undefined,
     salaryMin: searchParams.get("salaryMin") ? parseInt(searchParams.get("salaryMin")!) : undefined,
     category: searchParams.get("category") || "ALL",
+    stateLocation: searchParams.get("stateLocation") || "ALL",
     status: searchParams.get("status") || "ALL",
     sortBy: (searchParams.get("sort") as any) || "newest",
   });
@@ -30,6 +31,7 @@ function DiscoverContent() {
     const qFresher = searchParams.get("fresher") === "true";
     const qSearch = searchParams.get("search") || "";
     const qCategory = searchParams.get("category") || "ALL";
+    const qState = searchParams.get("stateLocation") || "ALL";
     const qQual = searchParams.get("qualification") || "ALL";
     const qSalary = searchParams.get("salaryMin") ? parseInt(searchParams.get("salaryMin")!) : undefined;
     const qSort = (searchParams.get("sort") as any) || "newest";
@@ -39,6 +41,7 @@ function DiscoverContent() {
       fresherOnly: qFresher,
       search: qSearch,
       category: qCategory,
+      stateLocation: qState,
       qualification: qQual,
       salaryMin: qSalary,
       sortBy: qSort,
@@ -61,6 +64,7 @@ function DiscoverContent() {
       if (filters.ageMax) params.set("ageMax", filters.ageMax.toString());
       if (filters.salaryMin) params.set("salaryMin", filters.salaryMin.toString());
       if (filters.category && filters.category !== "ALL") params.set("category", filters.category);
+      if (filters.stateLocation && filters.stateLocation !== "ALL") params.set("stateLocation", filters.stateLocation);
       if (filters.status && filters.status !== "ALL") params.set("status", filters.status);
       params.set("sort", filters.sortBy);
 
@@ -83,6 +87,7 @@ function DiscoverContent() {
       ageMax: undefined,
       salaryMin: undefined,
       category: "ALL",
+      stateLocation: "ALL",
       status: "ALL",
       sortBy: "newest",
     });

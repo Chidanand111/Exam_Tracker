@@ -42,6 +42,10 @@ export default function AdminDashboardPage() {
   const [corrigendumReason, setCorrigendumReason] = useState("Official Corrigendum No. 2/2026");
   const [corrigendumStatus, setCorrigendumStatus] = useState<string | null>(null);
 
+  // Deep Scan state
+  const [deepScanning, setDeepScanning] = useState(false);
+  const [deepScanResult, setDeepScanResult] = useState<any>(null);
+
   useEffect(() => {
     fetchAdminData();
   }, []);
@@ -59,6 +63,25 @@ export default function AdminDashboardPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTriggerDeepScan = async () => {
+    setDeepScanning(true);
+    setDeepScanResult(null);
+    try {
+      const res = await fetch("/api/admin/deep-scan", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setDeepScanResult(data.summary);
+        fetchAdminData();
+      } else {
+        alert(data.error || "Failed to run deep scan");
+      }
+    } catch {
+      alert("Failed to connect to deep scan API.");
+    } finally {
+      setDeepScanning(false);
     }
   };
 
@@ -153,15 +176,70 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleTriggerCrawl}
-          disabled={crawling}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-md shadow-amber-600/30 transition-all disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${crawling ? "animate-spin" : ""}`} />
-          <span>{crawling ? "Polling Portals..." : "Run Source Audit Now"}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={handleTriggerDeepScan}
+            disabled={deepScanning}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all disabled:opacity-50"
+          >
+            <Sparkles className={`w-4 h-4 text-blue-200 ${deepScanning ? "animate-spin" : ""}`} />
+            <span>{deepScanning ? "Scanning State & Central..." : "⚡ Deep Scan Central & State Govt"}</span>
+          </button>
+
+          <button
+            onClick={handleTriggerCrawl}
+            disabled={crawling}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-md shadow-amber-600/30 transition-all disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${crawling ? "animate-spin" : ""}`} />
+            <span>{crawling ? "Polling Portals..." : "Run Source Audit Now"}</span>
+          </button>
+        </div>
       </div>
+
+      {deepScanResult && (
+        <div className="p-4 rounded-3xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-slate-900 border border-blue-500/30 text-white space-y-3 shadow-lg">
+          <div className="flex items-center justify-between pb-2 border-b border-blue-500/20">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="font-bold text-xs uppercase tracking-wider text-blue-300">
+                Deep Scan Audit Complete: Central & State Portals Synchronized
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              {deepScanResult.totalVacanciesTracked?.toLocaleString()} Total Vacancies Tracked
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+              <span className="text-[10px] text-slate-400 block">Total Exams Scanned</span>
+              <span className="text-base font-extrabold text-white">{deepScanResult.totalExamsScanned}</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+              <span className="text-[10px] text-slate-400 block">Central Recruitments</span>
+              <span className="text-base font-extrabold text-blue-400">{deepScanResult.centralExamsCount}</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+              <span className="text-[10px] text-slate-400 block">State PSC Recruitments</span>
+              <span className="text-base font-extrabold text-emerald-400">{deepScanResult.stateExamsCount}</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+              <span className="text-[10px] text-slate-400 block">Official Sources Active</span>
+              <span className="text-base font-extrabold text-amber-400">{deepScanResult.sourcesCount}</span>
+            </div>
+          </div>
+
+          <div className="text-[11px] text-slate-300 flex items-center gap-1.5 flex-wrap pt-1">
+            <span className="text-slate-400 font-semibold">States Covered:</span>
+            {deepScanResult.statesCovered?.map((st: string) => (
+              <span key={st} className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 text-[10px]">
+                {st}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {crawlFeedback && (
         <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium flex items-center gap-2">

@@ -24,11 +24,31 @@ const QUALIFICATIONS = [
 ];
 
 const SECTORS = [
-  { id: "ALL", label: "All Sectors" },
-  { id: "CENTRAL", label: "Central Ministries (SSC/UPSC)" },
+  { id: "ALL", label: "All Sectors & Boards" },
+  { id: "CENTRAL", label: "Central Ministries (SSC/UPSC/IB)" },
+  { id: "STATE_PSC", label: "🏛️ State PSCs (UP, Bihar, MH, KA...)" },
   { id: "BANKING", label: "Banking & Finance (IBPS/SBI)" },
+  { id: "REGULATORY", label: "Apex Regulatory (RBI/SEBI/NABARD)" },
   { id: "RAILWAY", label: "Indian Railways (RRB)" },
-  { id: "DEFENCE", label: "Defence & Research (DRDO/ISRO)" },
+  { id: "DEFENCE", label: "Defence & Space (DRDO/ISRO/CDS)" },
+  { id: "PSU", label: "Public Sector Undertakings (FCI/AAI)" },
+];
+
+const STATES = [
+  { id: "ALL", label: "All Locations (Central & States)" },
+  { id: "All India", label: "🇮🇳 All India (Central Recruitments)" },
+  { id: "Uttar Pradesh", label: "Uttar Pradesh (UPPSC)" },
+  { id: "Bihar", label: "Bihar (BPSC)" },
+  { id: "Maharashtra", label: "Maharashtra (MPSC)" },
+  { id: "Karnataka", label: "Karnataka (KPSC)" },
+  { id: "Tamil Nadu", label: "Tamil Nadu (TNPSC)" },
+  { id: "Telangana", label: "Telangana (TGPSC)" },
+  { id: "Rajasthan", label: "Rajasthan (RPSC)" },
+  { id: "Madhya Pradesh", label: "Madhya Pradesh (MPPSC)" },
+  { id: "West Bengal", label: "West Bengal (WBPSC)" },
+  { id: "Andhra Pradesh", label: "Andhra Pradesh (APPSC)" },
+  { id: "Delhi NCT", label: "Delhi NCT (DSSSB)" },
+  { id: "Kerala", label: "Kerala (Kerala PSC)" },
 ];
 
 const STATUSES = [
@@ -161,6 +181,24 @@ export function FilterSidebar({ filters, onChange, onReset }: FilterSidebarProps
             </button>
           ))}
         </div>
+      </div>
+
+      {/* State / Region Filter */}
+      <div>
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+          State / Location
+        </label>
+        <select
+          value={filters.stateLocation || "ALL"}
+          onChange={(e) => update({ stateLocation: e.target.value })}
+          className="w-full px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+        >
+          {STATES.map((st) => (
+            <option key={st.id} value={st.id}>
+              {st.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Government Sector / Category */}

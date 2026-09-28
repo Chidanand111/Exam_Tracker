@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     const ageMax = searchParams.get("ageMax") ? parseInt(searchParams.get("ageMax")!) : null;
     const salaryMin = searchParams.get("salaryMin") ? parseInt(searchParams.get("salaryMin")!) : null;
     const category = searchParams.get("category");
+    const stateLocation = searchParams.get("stateLocation");
     const status = searchParams.get("status");
     const sortBy = searchParams.get("sort") || "newest";
 
@@ -72,10 +73,38 @@ export async function GET(req: Request) {
         where.organization = {
           OR: [{ category: "DEFENCE" }, { shortName: "ISRO" }, { shortName: "DRDO" }],
         };
+      } else if (category === "STATE_PSC") {
+        where.organization = {
+          category: "STATE_PSC",
+        };
+      } else if (category === "REGULATORY") {
+        where.organization = {
+          category: "REGULATORY",
+        };
+      } else if (category === "PSU") {
+        where.organization = {
+          category: "PSU",
+        };
       } else {
         where.organization = {
           category: category,
         };
+      }
+    }
+
+    // 6. State / Location Filter
+    if (stateLocation && stateLocation !== "ALL") {
+      if (stateLocation === "All India") {
+        andConditions.push({
+          OR: [
+            { stateLocation: "All India" },
+            { stateLocation: { startsWith: "All India" } },
+          ],
+        });
+      } else {
+        andConditions.push({
+          stateLocation: { contains: stateLocation, mode: "insensitive" },
+        });
       }
     }
 

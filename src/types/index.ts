@@ -204,6 +204,7 @@ export interface FilterState {
   ageMax?: number;
   salaryMin?: number;
   category: string;
+  stateLocation?: string;
   status: string;
   sortBy: "newest" | "closing_soon" | "exam_date" | "salary" | "vacancies";
 }
