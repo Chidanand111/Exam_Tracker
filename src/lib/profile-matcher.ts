@@ -1,4 +1,5 @@
 import { RecruitmentItem, CandidateProfileData, EligibilityMatchResult } from "@/types";
+import { evaluateEligibilityCompatibility } from "./eligibility-engine";
 
 /**
  * Evaluates candidate eligibility and personal match score against official recruitment criteria.
@@ -9,16 +10,19 @@ export function evaluateRecruitmentMatch(
   recruitment: RecruitmentItem,
   profile: CandidateProfileData | null | undefined
 ): EligibilityMatchResult {
+  const analysis = evaluateEligibilityCompatibility(recruitment, profile);
+
   if (!profile || !profile.isCompleted) {
     return {
       score: 50,
-      isAgeEligible: true,
+      isAgeEligible: analysis.determination !== "NOT_ELIGIBLE",
       isDegreeEligible: true,
       isFeeExempt: false,
       ageRelaxationYears: 0,
       calculatedAge: null,
-      reasons: [],
-      highlights: ["Profile not completed - showing standard official criteria"],
+      reasons: ["Profile not completed - showing standard official criteria"],
+      highlights: ["Candidate profile incomplete"],
+      analysis,
     };
   }
 
@@ -182,7 +186,8 @@ export function evaluateRecruitmentMatch(
     isFeeExempt,
     ageRelaxationYears,
     calculatedAge,
-    reasons,
+    reasons: analysis.determination === "NOT_ELIGIBLE" ? analysis.factors.filter((f) => f.status === "FAILED").map((f) => f.explanation) : reasons,
     highlights,
+    analysis,
   };
 }

@@ -13,17 +13,21 @@ import {
   ArrowRight,
   ShieldCheck,
   Building2,
+  FileText,
 } from "lucide-react";
 import { RecruitmentItem, CandidateProfileData } from "@/types";
 import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SalaryBadge } from "@/components/ui/SalaryBadge";
+import { EligibilityBadge } from "@/components/eligibility/EligibilityBadge";
+import { WhyAmIEligibleModal } from "@/components/eligibility/WhyAmIEligibleModal";
 
 interface RecruitmentCardProps {
   recruitment: RecruitmentItem;
   candidateProfile?: CandidateProfileData | null;
   isApplied?: boolean;
   onAppliedSuccess?: () => void;
+  onOpenProfile?: () => void;
 }
 
 export function RecruitmentCard({
@@ -31,11 +35,13 @@ export function RecruitmentCard({
   candidateProfile,
   isApplied = false,
   onAppliedSuccess,
+  onOpenProfile,
 }: RecruitmentCardProps) {
   const [applied, setApplied] = useState(isApplied);
   const [loading, setLoading] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showMatchDetails, setShowMatchDetails] = useState(false);
+  const [showWhyEligibleModal, setShowWhyEligibleModal] = useState(false);
   const [regNo, setRegNo] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [notes, setNotes] = useState("");
@@ -117,14 +123,18 @@ export function RecruitmentCard({
           <StatusBadge status={recruitment.status} size="sm" />
         </div>
 
-        {/* Candidate Profile Match Overlay (Derived, non-destructive) */}
-        {candidateProfile && candidateProfile.isCompleted && (
-          <div className="mb-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {/* Match Score */}
+        {/* Transparent Eligibility Compatibility Overlay (Indicative, non-destructive) */}
+        <div className="mb-3 p-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-inner space-y-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <EligibilityBadge
+                status={match.analysis?.determination || "ELIGIBILITY_UNCLEAR"}
+                size="sm"
+              />
+
+              {candidateProfile && candidateProfile.isCompleted && (
                 <span
-                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                     match.score >= 80
                       ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
                       : match.score >= 60
@@ -132,65 +142,77 @@ export function RecruitmentCard({
                       : "bg-slate-800 text-slate-400 border-slate-700"
                   }`}
                 >
-                  <Sparkles className="w-3 h-3" />
-                  <span>{match.score}% Profile Match</span>
+                  {match.score}% Score
                 </span>
+              )}
 
-                {/* Fee Waiver Tag */}
-                {match.isFeeExempt && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                    🎉 100% Fee Exempt
-                  </span>
-                )}
-
-                {/* Age Relaxation Tag */}
-                {match.isAgeEligible ? (
-                  match.ageRelaxationYears > 0 ? (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-950/40 text-blue-300 border border-blue-800/40">
-                      +{match.ageRelaxationYears}y {candidateProfile.category} Relaxed
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                      Age Eligible ({match.calculatedAge} yrs)
-                    </span>
-                  )
-                ) : (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    ⚠️ Age Ineligible
-                  </span>
-                )}
-              </div>
-
-              {match.highlights.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowMatchDetails(!showMatchDetails)}
-                  className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold underline shrink-0"
-                >
-                  {showMatchDetails ? "Hide Factors" : "Why this match?"}
-                </button>
+              {match.isFeeExempt && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                  🎉 100% Fee Free
+                </span>
               )}
             </div>
 
-            {/* Expanded Match Factors Details */}
-            {showMatchDetails && (
-              <div className="mt-2 pt-2 border-t border-slate-800 text-[11px] space-y-1">
-                {match.highlights.map((h, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-3 h-3 shrink-0" />
-                    <span>{h}</span>
-                  </div>
-                ))}
-                {match.reasons.map((r, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-rose-400 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-                    <span>{r}</span>
-                  </div>
-                ))}
-              </div>
+            {/* "Why am I eligible?" Action Button */}
+            {match.analysis && (
+              <button
+                type="button"
+                onClick={() => setShowWhyEligibleModal(true)}
+                className="text-[11px] font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 shrink-0"
+              >
+                <Sparkles className="w-3 h-3 text-blue-400" />
+                <span>Why am I eligible?</span>
+              </button>
             )}
           </div>
-        )}
+
+          {/* Quick Transparent Factor Explanations */}
+          {match.analysis ? (
+            <div className="space-y-1 text-[11px]">
+              {match.analysis.factors.slice(0, 3).map((f, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-1.5 truncate ${
+                    f.status === "PASSED"
+                      ? "text-emerald-300"
+                      : f.status === "FAILED"
+                      ? "text-rose-300 font-semibold"
+                      : f.status === "CONDITION_REQUIRES_VERIFICATION"
+                      ? "text-amber-300"
+                      : "text-slate-400 italic"
+                  }`}
+                >
+                  <span className="shrink-0 font-bold">
+                    {f.status === "PASSED"
+                      ? "✓"
+                      : f.status === "FAILED"
+                      ? "✕"
+                      : f.status === "CONDITION_REQUIRES_VERIFICATION"
+                      ? "⚠"
+                      : "?"}
+                  </span>
+                  <span className="truncate">{f.explanation}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400 italic">
+              Eligibility cannot be determined from the available information.
+            </p>
+          )}
+
+          {/* Subtle Non-Official Disclaimer */}
+          <div className="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+            <span>Automated indicative analysis • Not an official decision</span>
+            <button
+              type="button"
+              onClick={() => setShowWhyEligibleModal(true)}
+              className="text-blue-400 hover:underline font-medium"
+            >
+              View 17 factors →
+            </button>
+          </div>
+        </div>
 
         {/* Title */}
         <Link href={`/exams/${recruitment.id}`} className="group-hover:text-blue-400 transition-colors">
@@ -280,6 +302,31 @@ export function RecruitmentCard({
             <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
               Closing Soon
             </span>
+          )}
+        </div>
+
+        {/* Check Official Notification Action Link */}
+        <div className="flex items-center justify-between text-xs pb-2.5 mb-2.5 border-b border-slate-800/80">
+          <a
+            href={recruitment.officialNotificationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-blue-400 transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span>Check official notification</span>
+            <ExternalLink className="w-3 h-3 text-slate-500" />
+          </a>
+
+          {match.analysis && (
+            <button
+              type="button"
+              onClick={() => setShowWhyEligibleModal(true)}
+              className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1"
+            >
+              <span>Why am I eligible?</span>
+              <span>→</span>
+            </button>
           )}
         </div>
 
@@ -384,6 +431,16 @@ export function RecruitmentCard({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Why Am I Eligible Full Factor Transparency Modal */}
+      {match.analysis && (
+        <WhyAmIEligibleModal
+          isOpen={showWhyEligibleModal}
+          onClose={() => setShowWhyEligibleModal(false)}
+          analysis={match.analysis}
+          onOpenProfile={onOpenProfile}
+        />
       )}
     </div>
   );

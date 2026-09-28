@@ -343,6 +343,59 @@ export function OnboardingModal({ isOpen, onClose, onSaved, initialProfile }: On
                 </div>
               </label>
             </div>
+
+            {/* Optional Physical & License Standards */}
+            <div className="pt-2 border-t border-slate-800 space-y-2">
+              <span className="text-[11px] font-bold text-slate-300 block uppercase tracking-wider">
+                Physical Standards & Driving License (Optional for Police / Defence / Special Exams)
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-medium mb-1">Height (cm)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 172"
+                    value={formData.physicalHeightCm || ""}
+                    onChange={(e) => setFormData({ ...formData, physicalHeightCm: parseFloat(e.target.value) || undefined })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-medium mb-1">Driving License</label>
+                  <select
+                    value={formData.hasDrivingLicense ? (formData.licenseType || "LMV") : "NONE"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "NONE") {
+                        setFormData({ ...formData, hasDrivingLicense: false, licenseType: undefined });
+                      } else {
+                        setFormData({ ...formData, hasDrivingLicense: true, licenseType: val });
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                  >
+                    <option value="NONE">No Driving License</option>
+                    <option value="LMV">LMV (Light Motor Vehicle)</option>
+                    <option value="HMV">HMV (Heavy Motor Vehicle)</option>
+                    <option value="TWO_WHEELER">Two Wheeler Only</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-medium mb-1">Previous Attempts Used</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="15"
+                    value={formData.attemptsCount ?? 0}
+                    onChange={(e) => setFormData({ ...formData, attemptsCount: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

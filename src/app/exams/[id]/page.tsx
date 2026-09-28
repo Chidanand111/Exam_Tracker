@@ -20,11 +20,15 @@ import {
   ShieldCheck,
   ChevronRight,
   Download,
+  Sparkles,
 } from "lucide-react";
-import { RecruitmentItem } from "@/types";
+import { RecruitmentItem, CandidateProfileData } from "@/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SalaryBadge } from "@/components/ui/SalaryBadge";
 import { DynamicStageTimeline } from "@/components/stages/DynamicStageTimeline";
+import { EligibilityBadge } from "@/components/eligibility/EligibilityBadge";
+import { WhyAmIEligibleModal } from "@/components/eligibility/WhyAmIEligibleModal";
+import { evaluateEligibilityCompatibility } from "@/lib/eligibility-engine";
 
 export default function RecruitmentDetailPage() {
   const params = useParams();
@@ -32,6 +36,8 @@ export default function RecruitmentDetailPage() {
   const id = params.id as string;
 
   const [recruitment, setRecruitment] = useState<RecruitmentItem | null>(null);
+  const [profile, setProfile] = useState<CandidateProfileData | null>(null);
+  const [showWhyEligibleModal, setShowWhyEligibleModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isApplied, setIsApplied] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -43,7 +49,18 @@ export default function RecruitmentDetailPage() {
   useEffect(() => {
     fetchRecruitment();
     checkIfApplied();
+    fetchProfile();
   }, [id]);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("/api/profile");
+      const data = await res.json();
+      if (data.profile) setProfile(data.profile);
+    } catch {
+      // ignore
+    }
+  };
 
   const fetchRecruitment = async () => {
     try {
@@ -129,6 +146,10 @@ export default function RecruitmentDetailPage() {
     ? JSON.parse(recruitment.examPatternJson)
     : [];
 
+  const analysis = recruitment
+    ? evaluateEligibilityCompatibility(recruitment, profile)
+    : null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Breadcrumb */}
@@ -154,6 +175,18 @@ export default function RecruitmentDetailPage() {
                   <GraduationCap className="w-3.5 h-3.5" />
                   <span>Freshers Eligible</span>
                 </span>
+              )}
+              {analysis && (
+                <div className="flex items-center gap-2 pl-1">
+                  <EligibilityBadge status={analysis.determination} size="md" />
+                  <button
+                    type="button"
+                    onClick={() => setShowWhyEligibleModal(true)}
+                    className="text-xs font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>Why am I eligible?</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -238,6 +271,112 @@ export default function RecruitmentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column (2 cols): Stages, Syllabus, Pattern */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Eligibility Compatibility Engine Section (17-Factor Rules Analysis) */}
+          {analysis && (
+            <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-blue-400" />
+                    <h3 className="text-base font-bold text-white tracking-tight">
+                      Eligibility Compatibility Engine
+                    </h3>
+                    <EligibilityBadge status={analysis.determination} size="sm" />
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Transparent 17-factor rule evaluation (Engine v{analysis.ruleVersion} • {analysis.cycleYear} Cycle)
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowWhyEligibleModal(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                    <span>Why am I eligible?</span>
+                  </button>
+
+                  <a
+                    href={recruitment.officialNotificationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Check official notification</span>
+                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Indicative Non-Official Disclaimer */}
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                  {analysis.disclaimer}
+                </p>
+              </div>
+
+              {/* Cut-off Reference Date */}
+              {analysis.cutoffDescription && (
+                <div className="p-2.5 rounded-xl bg-blue-950/30 border border-blue-500/20 text-blue-300 text-xs flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-blue-400" />
+                    <span>{analysis.cutoffDescription}</span>
+                  </div>
+                  <span className="text-[10px] uppercase font-bold text-blue-400">Crucial Cut-Off</span>
+                </div>
+              )}
+
+              {/* Factor Breakdown Preview */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {analysis.factors.slice(0, 6).map((f, i) => (
+                  <div
+                    key={i}
+                    className={`p-3 rounded-2xl border text-xs space-y-1 ${
+                      f.status === "PASSED"
+                        ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-300"
+                        : f.status === "FAILED"
+                        ? "bg-rose-950/20 border-rose-500/30 text-rose-300"
+                        : f.status === "CONDITION_REQUIRES_VERIFICATION"
+                        ? "bg-amber-950/20 border-amber-500/30 text-amber-300"
+                        : "bg-slate-800/40 border-slate-700/60 text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white text-[11px]">{f.factorName}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900/60 border border-slate-800">
+                        {f.status === "PASSED"
+                          ? "✓ Matched"
+                          : f.status === "FAILED"
+                          ? "✕ Failed"
+                          : f.status === "CONDITION_REQUIRES_VERIFICATION"
+                          ? "⚠ Verification Req."
+                          : "? Incomplete Data"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-snug">{f.explanation}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80">
+                <span>
+                  Evaluated {analysis.passedCount} verified factors, {analysis.verificationCount} conditions requiring verification, and {analysis.unclearCount} factors with incomplete data.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowWhyEligibleModal(true)}
+                  className="text-blue-400 font-bold hover:underline"
+                >
+                  Inspect all 17 factors →
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Dynamic Stages Section */}
           <div className="glass-panel rounded-3xl p-6 border border-slate-800">
             <DynamicStageTimeline
@@ -536,6 +675,15 @@ export default function RecruitmentDetailPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Why Am I Eligible Modal */}
+      {analysis && (
+        <WhyAmIEligibleModal
+          isOpen={showWhyEligibleModal}
+          onClose={() => setShowWhyEligibleModal(false)}
+          analysis={analysis}
+        />
       )}
     </div>
   );

@@ -293,6 +293,7 @@ function DiscoverContent() {
                   recruitment={recruitment}
                   candidateProfile={candidateProfile}
                   onAppliedSuccess={fetchFiltered}
+                  onOpenProfile={() => setShowOnboarding(true)}
                 />
               ))}
             </div>

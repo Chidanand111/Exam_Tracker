@@ -39,6 +39,7 @@ export async function GET() {
       preferredJobTypes: parseJsonArray(profile.preferredJobTypes),
       languagesKnown: parseJsonArray(profile.languagesKnown),
       skills: parseJsonArray(profile.skills),
+      certifications: parseJsonArray(profile.certifications),
       dateOfBirth: profile.dateOfBirth?.toISOString() || null,
     };
 
@@ -79,6 +80,12 @@ export async function PUT(req: Request) {
       willingToRelocate: body.willingToRelocate !== false,
       languagesKnown: JSON.stringify(body.languagesKnown || []),
       skills: JSON.stringify(body.skills || []),
+      nationality: body.nationality || "INDIAN",
+      physicalHeightCm: body.physicalHeightCm ? parseFloat(body.physicalHeightCm) : null,
+      hasDrivingLicense: Boolean(body.hasDrivingLicense),
+      licenseType: body.licenseType || null,
+      attemptsCount: body.attemptsCount !== undefined && body.attemptsCount !== null ? parseInt(body.attemptsCount) : 0,
+      certifications: JSON.stringify(body.certifications || []),
       isCompleted: true,
       isPrivate: true,
     };
@@ -101,6 +108,7 @@ export async function PUT(req: Request) {
       preferredJobTypes: parseJsonArray(updatedProfile.preferredJobTypes),
       languagesKnown: parseJsonArray(updatedProfile.languagesKnown),
       skills: parseJsonArray(updatedProfile.skills),
+      certifications: parseJsonArray(updatedProfile.certifications),
       dateOfBirth: updatedProfile.dateOfBirth?.toISOString() || null,
     };
 

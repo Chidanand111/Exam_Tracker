@@ -79,8 +79,123 @@ export interface CandidateProfileData {
   willingToRelocate: boolean;
   languagesKnown: string[];
   skills: string[];
+
+  // Advanced Eligibility Attributes (Optional)
+  nationality?: string | null;
+  physicalHeightCm?: number | null;
+  hasDrivingLicense?: boolean;
+  licenseType?: string | null;
+  attemptsCount?: number | null;
+  certifications?: string[];
+
   isCompleted: boolean;
   isPrivate: boolean;
+}
+
+export type EligibilityDeterminationStatus =
+  | "ELIGIBLE"
+  | "POTENTIALLY_ELIGIBLE"
+  | "ELIGIBILITY_UNCLEAR"
+  | "NOT_ELIGIBLE";
+
+export type EligibilityFactorStatus =
+  | "PASSED"
+  | "FAILED"
+  | "CONDITION_REQUIRES_VERIFICATION"
+  | "DATA_UNAVAILABLE"
+  | "NOT_APPLICABLE";
+
+export type EligibilityFactorCode =
+  | "MIN_AGE"
+  | "MAX_AGE"
+  | "CUTOFF_DATE"
+  | "QUALIFICATION"
+  | "DEGREE_SPECIALIZATION"
+  | "BRANCH"
+  | "PERCENTAGE"
+  | "CGPA"
+  | "EXPERIENCE"
+  | "ATTEMPTS"
+  | "CATEGORY_RELAXATION"
+  | "GENDER_CONDITIONS"
+  | "NATIONALITY"
+  | "PHYSICAL_REQUIREMENTS"
+  | "PROFESSIONAL_CERTIFICATIONS"
+  | "LICENSE_REQUIREMENTS"
+  | "LOCATION_CONDITIONS";
+
+export interface EligibilityFactorResult {
+  factorCode: EligibilityFactorCode;
+  factorName: string;
+  categoryGroup: "AGE_AND_DEMOGRAPHICS" | "ACADEMICS" | "EXPERIENCE_AND_ATTEMPTS" | "TECHNICAL_AND_PHYSICAL";
+  status: EligibilityFactorStatus;
+  badgeLabel: string;
+  explanation: string; // e.g. "✓ Degree requirement matched", "⚠ Category-specific condition requires verification", "Eligibility cannot be determined from the available information."
+  candidateValueDisplay: string;
+  ruleRequirementDisplay: string;
+  officialNotificationClause?: string | null;
+  isDataMissing: boolean;
+}
+
+export interface EligibilityAnalysisResult {
+  recruitmentId: string;
+  recruitmentTitle: string;
+  determination: EligibilityDeterminationStatus; // ELIGIBLE | POTENTIALLY_ELIGIBLE | ELIGIBILITY_UNCLEAR | NOT_ELIGIBLE
+  determinationLabel: "Eligible" | "Potentially eligible" | "Eligibility unclear" | "Not eligible";
+  disclaimer: string;
+  factors: EligibilityFactorResult[];
+  cutoffDateString?: string | null;
+  cutoffDescription?: string | null;
+  ruleVersion: string;
+  cycleYear: number;
+  officialNotificationUrl: string;
+  passedCount: number;
+  unclearCount: number;
+  failedCount: number;
+  verificationCount: number;
+  whyEligibleSummary: string[];
+}
+
+export interface ConfiguredEligibilityRules {
+  version: string;
+  cycleYear: number;
+  cutoffDate?: string | null;
+  cutoffDescription?: string | null;
+  minAge?: number | null;
+  maxAge?: number | null;
+  categoryRelaxations?: Record<string, number>; // e.g. { "OBC": 3, "SC": 5, "ST": 5, "PwD": 10, "ESM": 3 }
+  qualificationsAllowed?: string[]; // e.g. ["ANY_GRADUATE", "BTECH", "BE"]
+  allowedDegrees?: string[]; // e.g. ["B.Tech", "B.E.", "B.Com"]
+  allowedBranches?: string[]; // e.g. ["Computer Science", "Information Technology", "Any"]
+  minPercentage?: number | null; // e.g. 60.0
+  minCgpa?: number | null; // e.g. 6.5
+  minExperienceYears?: number | null;
+  fresherAllowed?: boolean;
+  maxAttempts?: Record<string, number | "UNLIMITED">; // e.g. { "UR": 6, "OBC": 9, "SC": "UNLIMITED", "ST": "UNLIMITED" }
+  genderConditions?: {
+    allowedGenders?: string[];
+    specialConditions?: string;
+  };
+  nationalityRequired?: string[]; // e.g. ["Citizen of India", "Subject of Nepal", "Subject of Bhutan"]
+  physicalRequirements?: {
+    minHeightMaleCm?: number;
+    minHeightFemaleCm?: number;
+    chestExpansionCm?: number;
+    eyesightCriteria?: string;
+    details?: string;
+  };
+  certificationsRequired?: string[]; // e.g. ["CCC Computer Certificate", "GATE 2026 Qualified"]
+  licenseRequired?: {
+    required: boolean;
+    type?: string; // e.g. "LMV (Light Motor Vehicle)"
+    details?: string;
+  };
+  locationConditions?: {
+    stateSpecific?: string[]; // e.g. ["Uttar Pradesh", "Karnataka"]
+    domicileRequired?: boolean;
+    languageProficiency?: string;
+  };
+  officialClauseReference?: string;
 }
 
 export interface EligibilityMatchResult {
@@ -92,6 +207,7 @@ export interface EligibilityMatchResult {
   calculatedAge: number | null;
   reasons: string[];
   highlights: string[];
+  analysis?: EligibilityAnalysisResult;
 }
 
 export interface UserSession {

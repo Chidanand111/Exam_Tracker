@@ -79,6 +79,7 @@ model Recruitment {
   applications          UserApplication[]
   changeHistory         ChangeHistory[]
   documents             SourceDocument[]
+  ruleSets              EligibilityRuleSet[]
 }
 
 model RecruitmentPost {
@@ -297,9 +298,42 @@ model CandidateProfile {
   languagesKnown       String?   // JSON array of strings e.g. ["English", "Hindi", "Kannada"]
   skills               String?   // JSON array of strings e.g. ["Typing 35 wpm", "Computer Knowledge", "GATE 2025"]
   
+  // Advanced Eligibility Attributes (Optional)
+  nationality          String?   @default("INDIAN")
+  physicalHeightCm     Float?    // e.g. 168.0
+  hasDrivingLicense    Boolean   @default(false)
+  licenseType          String?   // "LMV", "HMV", "TWO_WHEELER"
+  attemptsCount        Int?      @default(0) // Previous attempts taken in competitive exams
+  certifications       String?   // JSON array e.g. ["CCC", "GATE", "NET"]
+
   // Privacy & Onboarding Status
   isCompleted          Boolean   @default(false)
   isPrivate            Boolean   @default(true) // Always private to candidate
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 }
+
+model EligibilityRuleSet {
+  id                        String       @id @default(cuid())
+  recruitmentId             String
+  recruitment               Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  version                   String       @default("2026.1") // Versioned eligibility rules
+  cycleYear                 Int          @default(2026)
+  ruleName                  String       // e.g. "CGL 2026 Multi-Tier Eligibility Rules"
+  description               String?
+  isActive                  Boolean      @default(true)
+
+  // Cut-off reference date
+  cutoffDate                DateTime?
+  cutoffDescription         String?      // e.g. "Age & Degree calculated as on 01-08-2026 (Para 5.1)"
+
+  // Configurable structured rules JSON
+  rulesJson                 String       // JSON encoded 17-factor rule configuration
+
+  officialClauseReference   String?      // e.g. "Notification Clauses 5.1 - 5.8 & Annexure IV"
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+
+  @@index([recruitmentId, isActive])
+}
+

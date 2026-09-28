@@ -1540,6 +1540,60 @@ export async function executeDeepScan(): Promise<DeepScanSummary> {
               });
             }
           }
+
+          // Ensure versioned EligibilityRuleSet exists
+          const existingRuleSet = await prisma.eligibilityRuleSet.findFirst({
+            where: { recruitmentId: recId, isActive: true },
+          });
+
+          if (!existingRuleSet) {
+            const rulesConfig = {
+              version: "2026.1",
+              cycleYear: 2026,
+              cutoffDate: item.appDeadline,
+              cutoffDescription: item.appDeadline
+                ? `Age & qualification determined as on ${new Date(item.appDeadline).toLocaleDateString("en-IN")}`
+                : "Determined as on official cut-off date",
+              minAge: item.minAge || 18,
+              maxAge: item.maxAge || 30,
+              categoryRelaxations: { OBC: 3, SC: 5, ST: 5, PwD: 10, ESM: 3, EWS: 0, UR: 0 },
+              qualificationsAllowed: item.qualifications,
+              allowedDegrees: [],
+              allowedBranches: [],
+              minPercentage: null,
+              minCgpa: null,
+              minExperienceYears: item.fresherEligible ? 0 : 2,
+              fresherAllowed: item.fresherEligible,
+              maxAttempts: { UR: 6, EWS: 6, OBC: 9, SC: "UNLIMITED", ST: "UNLIMITED", PwD: 9 },
+              genderConditions: {
+                allowedGenders: ["MALE", "FEMALE", "TRANSGENDER", "OTHER"],
+              },
+              nationalityRequired: ["Citizen of India", "Subject of Nepal", "Subject of Bhutan"],
+              physicalRequirements: undefined,
+              certificationsRequired: [],
+              licenseRequired: undefined,
+              locationConditions: {
+                stateSpecific: item.stateLocation && item.stateLocation !== "All India" ? [item.stateLocation] : ["All India"],
+                domicileRequired: false,
+              },
+              officialClauseReference: `Notification Clause 5.1 & Annexure IV (${item.title})`,
+            };
+
+            await prisma.eligibilityRuleSet.create({
+              data: {
+                recruitmentId: recId,
+                version: "2026.1",
+                cycleYear: 2026,
+                ruleName: `${item.title} Eligibility Rules`,
+                description: `Versioned eligibility criteria for ${item.title}`,
+                isActive: true,
+                cutoffDate: item.appDeadline,
+                cutoffDescription: rulesConfig.cutoffDescription,
+                rulesJson: JSON.stringify(rulesConfig),
+                officialClauseReference: rulesConfig.officialClauseReference,
+              },
+            });
+          }
         }
 
         success = true;

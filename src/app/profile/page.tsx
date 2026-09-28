@@ -437,6 +437,73 @@ export default function CandidateProfilePage() {
               </div>
             </label>
           </div>
+
+          {/* Special & Technical Eligibility Criteria (Optional) */}
+          <div className="pt-3 border-t border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+              Physical Standards, Driving License & Exam Attempts (Optional)
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Height (cm)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 172"
+                  value={profile?.physicalHeightCm || ""}
+                  onChange={(e) => setProfile({ ...profile!, physicalHeightCm: parseFloat(e.target.value) || undefined })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                />
+                <span className="text-[10px] text-slate-500">Police/Defence criteria</span>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Driving License</label>
+                <select
+                  value={profile?.hasDrivingLicense ? (profile.licenseType || "LMV") : "NONE"}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "NONE") {
+                      setProfile({ ...profile!, hasDrivingLicense: false, licenseType: undefined });
+                    } else {
+                      setProfile({ ...profile!, hasDrivingLicense: true, licenseType: val });
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                >
+                  <option value="NONE">No Driving License</option>
+                  <option value="LMV">LMV (Light Motor Vehicle)</option>
+                  <option value="HMV">HMV (Heavy Transport)</option>
+                  <option value="TWO_WHEELER">Two Wheeler</option>
+                </select>
+                <span className="text-[10px] text-slate-500">Transport/Constable</span>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Previous Attempts Used</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  value={profile?.attemptsCount ?? 0}
+                  onChange={(e) => setProfile({ ...profile!, attemptsCount: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                />
+                <span className="text-[10px] text-slate-500">UPSC/State attempt ceiling</span>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Nationality</label>
+                <input
+                  type="text"
+                  value={profile?.nationality || "Citizen of India"}
+                  onChange={(e) => setProfile({ ...profile!, nationality: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+                />
+                <span className="text-[10px] text-slate-500">Citizenship clause</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Section 3: Sector & Location Preferences */}
