@@ -155,6 +155,18 @@ export function Navbar() {
             </Link>
 
             <Link
+              href="/profile"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname === "/profile"
+                  ? "bg-purple-600/15 text-purple-400 border border-purple-500/30"
+                  : "text-slate-300 hover:text-purple-300 hover:bg-slate-800/60"
+              }`}
+            >
+              <User className="w-4 h-4 text-purple-400" />
+              <span>Candidate Profile</span>
+            </Link>
+
+            <Link
               href="/admin"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 pathname.startsWith("/admin")
@@ -282,6 +294,15 @@ export function Navbar() {
                     >
                       <BookmarkCheck className="w-4 h-4 text-blue-400" />
                       <span>My Tracked Applications</span>
+                    </Link>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800"
+                    >
+                      <User className="w-4 h-4 text-purple-400" />
+                      <span>Candidate Profile & Preferences</span>
                     </Link>
 
                     {/* Quick Demo Switchers */}

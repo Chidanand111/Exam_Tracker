@@ -2,13 +2,20 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Compass, AlertCircle } from "lucide-react";
-import { RecruitmentItem, FilterState } from "@/types";
+import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2 } from "lucide-react";
+import { RecruitmentItem, FilterState, CandidateProfileData } from "@/types";
 import { FilterSidebar } from "@/components/recruitments/FilterSidebar";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
+import { OnboardingModal } from "@/components/profile/OnboardingModal";
+import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
 
 function DiscoverContent() {
   const searchParams = useSearchParams();
+
+  const [candidateProfile, setCandidateProfile] = useState<CandidateProfileData | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [profileMatchSort, setProfileMatchSort] = useState(false);
+  const [profileBannerDismissed, setProfileBannerDismissed] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     search: searchParams.get("search") || "",
@@ -49,6 +56,22 @@ function DiscoverContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("/api/profile");
+      const data = await res.json();
+      if (data.profile) {
+        setCandidateProfile(data.profile);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
     fetchFiltered();
   }, [filters]);
 
@@ -77,6 +100,15 @@ function DiscoverContent() {
       setLoading(false);
     }
   };
+
+  const displayedRecruitments = React.useMemo(() => {
+    if (!profileMatchSort || !candidateProfile) return recruitments;
+    return [...recruitments].sort((a, b) => {
+      const scoreA = evaluateRecruitmentMatch(a, candidateProfile).score;
+      const scoreB = evaluateRecruitmentMatch(b, candidateProfile).score;
+      return scoreB - scoreA;
+    });
+  }, [recruitments, profileMatchSort, candidateProfile]);
 
   const handleReset = () => {
     setFilters({
@@ -125,6 +157,94 @@ function DiscoverContent() {
         </div>
       </div>
 
+      {/* Candidate Personalization Banners */}
+      {candidateProfile && candidateProfile.isCompleted ? (
+        <div className="p-4 rounded-2xl glass-panel bg-gradient-to-r from-blue-950/40 via-purple-950/30 to-slate-900 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-white">Personalized for your profile:</span>
+                <span className="text-[11px] font-semibold text-blue-300 bg-blue-500/15 px-2 py-0.5 rounded-full border border-blue-500/20">
+                  {candidateProfile.degree || candidateProfile.highestQualification}
+                </span>
+                <span className="text-[11px] font-semibold text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/20">
+                  {candidateProfile.category} Category
+                </span>
+                {candidateProfile.gender === "FEMALE" && (
+                  <span className="text-[11px] font-semibold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    🎉 100% Fee Waiver Active
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Eligibility factors & relaxations are matched directly against official vacancy circulars without altering official data.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setProfileMatchSort(!profileMatchSort)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${
+                profileMatchSort
+                  ? "bg-purple-600 border-purple-500 text-white shadow-md shadow-purple-600/30"
+                  : "bg-slate-800/80 border-slate-700 text-slate-300 hover:text-white"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+              <span>{profileMatchSort ? "✓ Ranked by Best Match" : "Rank by Best Match"}</span>
+            </button>
+
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-colors flex items-center gap-1"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              <span>Edit Profile</span>
+            </button>
+          </div>
+        </div>
+      ) : !profileBannerDismissed ? (
+        <div className="p-4 rounded-2xl glass-panel bg-gradient-to-r from-blue-950/30 via-slate-900 to-slate-900 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Personalize Exam Discovery with an Optional Candidate Profile</span>
+                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                  Optional & Private
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Set your qualification, category, and date of birth to receive automatic age relaxation tags (+3y OBC / +5y SC/ST) and 100% fee waiver tags.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setProfileBannerDismissed(true)}
+              className="text-xs text-slate-400 hover:text-slate-300 px-2 py-1"
+            >
+              Skip for now
+            </button>
+
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="px-4 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30 transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+              <span>Set Up Candidate Profile</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {/* Main Content: Sidebar + Cards Grid */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filter Sidebar */}
@@ -135,7 +255,8 @@ function DiscoverContent() {
           {/* Active summary bar */}
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>
-              Showing <strong className="text-white">{recruitments.length}</strong> verified opportunities
+              Showing <strong className="text-white">{displayedRecruitments.length}</strong> verified opportunities
+              {profileMatchSort && <span className="text-purple-400 ml-1 font-semibold">(Ranked by profile match score)</span>}
             </span>
             {filters.fresherOnly && (
               <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
@@ -150,7 +271,7 @@ function DiscoverContent() {
                 <div key={i} className="h-64 rounded-2xl bg-slate-900/60 animate-pulse border border-slate-800" />
               ))}
             </div>
-          ) : recruitments.length === 0 ? (
+          ) : displayedRecruitments.length === 0 ? (
             <div className="p-12 text-center rounded-2xl glass-panel border border-slate-800 space-y-3">
               <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
               <h3 className="font-bold text-white text-base">No recruitments match your filters</h3>
@@ -166,10 +287,11 @@ function DiscoverContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {recruitments.map((recruitment) => (
+              {displayedRecruitments.map((recruitment) => (
                 <RecruitmentCard
                   key={recruitment.id}
                   recruitment={recruitment}
+                  candidateProfile={candidateProfile}
                   onAppliedSuccess={fetchFiltered}
                 />
               ))}
@@ -177,6 +299,17 @@ function DiscoverContent() {
           )}
         </div>
       </div>
+
+      {/* Onboarding Wizard Modal */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onSaved={(p) => {
+          setCandidateProfile(p);
+          setShowOnboarding(false);
+        }}
+        initialProfile={candidateProfile}
+      />
     </div>
   );
 }

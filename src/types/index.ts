@@ -53,11 +53,53 @@ export type ReminderPreset =
 
 export type NotificationType = "INFO" | "ALERT" | "SUCCESS" | "WARNING";
 
+export type CandidateCategory = "UR" | "OBC" | "SC" | "ST" | "EWS";
+export type CandidateGender = "MALE" | "FEMALE" | "TRANSGENDER" | "OTHER";
+
+export interface CandidateProfileData {
+  id?: string;
+  userId?: string;
+  highestQualification?: string | null;
+  degree?: string | null;
+  branch?: string | null;
+  graduationYear?: number | null;
+  percentage?: number | null;
+  dateOfBirth?: string | null;
+  gender?: CandidateGender | null;
+  category?: CandidateCategory | null;
+  isPwD: boolean;
+  pwDType?: string | null;
+  isExServiceman: boolean;
+  preferredStates: string[];
+  preferredCities: string[];
+  preferredDepartments: string[];
+  preferredSectors: string[];
+  preferredJobTypes: string[];
+  preferredMinSalary?: number | null;
+  willingToRelocate: boolean;
+  languagesKnown: string[];
+  skills: string[];
+  isCompleted: boolean;
+  isPrivate: boolean;
+}
+
+export interface EligibilityMatchResult {
+  score: number; // 0 - 100
+  isAgeEligible: boolean;
+  isDegreeEligible: boolean;
+  isFeeExempt: boolean;
+  ageRelaxationYears: number;
+  calculatedAge: number | null;
+  reasons: string[];
+  highlights: string[];
+}
+
 export interface UserSession {
   id: string;
   name: string;
   email: string;
   role: Role;
+  profile?: CandidateProfileData | null;
 }
 
 export interface ShiftSlot {

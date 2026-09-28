@@ -20,6 +20,7 @@ model User {
   applications UserApplication[]
   reminders    Reminder[]
   notifications Notification[]
+  profile      CandidateProfile?
 }
 
 model Organization {
@@ -263,4 +264,42 @@ model ChangeHistory {
   newValue      String
   changeReason  String?      // e.g. "Official Corrigendum Notice No. 4/2026"
   detectedAt    DateTime     @default(now())
+}
+
+model CandidateProfile {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Academics & Qualifications
+  highestQualification String?   // "ANY_GRADUATE", "BTECH", "BE", "BCOM", "BSC", "BA", "BCA", "MCA", "MBA", "DIPLOMA", "POST_GRADUATE"
+  degree               String?   // e.g. "B.Tech in Computer Science", "B.Com Honors"
+  branch               String?   // e.g. "Computer Science & Engineering", "Civil", "Mechanical", "Commerce", "General"
+  graduationYear       Int?      // e.g. 2024
+  percentage           Float?    // e.g. 74.5 or CGPA converted
+  
+  // Demographics & Eligibility Criteria
+  dateOfBirth          DateTime?
+  gender               String?   // "MALE", "FEMALE", "TRANSGENDER", "OTHER"
+  category             String?   @default("UR") // "UR", "OBC", "SC", "ST", "EWS"
+  isPwD                Boolean   @default(false)
+  pwDType              String?   // "Locomotor (OH)", "Hearing (HH)", "Visual (VH)", "Multiple"
+  isExServiceman       Boolean   @default(false)
+  
+  // Career Preferences & Goals
+  preferredStates      String?   // JSON array of strings e.g. ["Karnataka", "Delhi", "All India"]
+  preferredCities      String?   // JSON array of strings or comma-separated
+  preferredDepartments String?   // JSON array of strings e.g. ["Income Tax", "Railways", "Space/ISRO", "Banking"]
+  preferredSectors     String?   // JSON array of strings e.g. ["CENTRAL", "BANKING", "DEFENCE", "STATE_PSC"]
+  preferredJobTypes    String?   // JSON array of strings e.g. ["Administrative", "Technical/Engineering", "Banking/Financial"]
+  preferredMinSalary   Int?      // e.g. 50000
+  willingToRelocate    Boolean   @default(true)
+  languagesKnown       String?   // JSON array of strings e.g. ["English", "Hindi", "Kannada"]
+  skills               String?   // JSON array of strings e.g. ["Typing 35 wpm", "Computer Knowledge", "GATE 2025"]
+  
+  // Privacy & Onboarding Status
+  isCompleted          Boolean   @default(false)
+  isPrivate            Boolean   @default(true) // Always private to candidate
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }

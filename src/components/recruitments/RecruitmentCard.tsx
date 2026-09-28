@@ -14,27 +14,33 @@ import {
   ShieldCheck,
   Building2,
 } from "lucide-react";
-import { RecruitmentItem } from "@/types";
+import { RecruitmentItem, CandidateProfileData } from "@/types";
+import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SalaryBadge } from "@/components/ui/SalaryBadge";
 
 interface RecruitmentCardProps {
   recruitment: RecruitmentItem;
+  candidateProfile?: CandidateProfileData | null;
   isApplied?: boolean;
   onAppliedSuccess?: () => void;
 }
 
 export function RecruitmentCard({
   recruitment,
+  candidateProfile,
   isApplied = false,
   onAppliedSuccess,
 }: RecruitmentCardProps) {
   const [applied, setApplied] = useState(isApplied);
   const [loading, setLoading] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showMatchDetails, setShowMatchDetails] = useState(false);
   const [regNo, setRegNo] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [notes, setNotes] = useState("");
+
+  const match = evaluateRecruitmentMatch(recruitment, candidateProfile);
 
   const handleApplyClick = () => {
     // 4. Application Flow: Open official application URL in a new browser tab.
@@ -110,6 +116,81 @@ export function RecruitmentCard({
 
           <StatusBadge status={recruitment.status} size="sm" />
         </div>
+
+        {/* Candidate Profile Match Overlay (Derived, non-destructive) */}
+        {candidateProfile && candidateProfile.isCompleted && (
+          <div className="mb-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {/* Match Score */}
+                <span
+                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                    match.score >= 80
+                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                      : match.score >= 60
+                      ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                      : "bg-slate-800 text-slate-400 border-slate-700"
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>{match.score}% Profile Match</span>
+                </span>
+
+                {/* Fee Waiver Tag */}
+                {match.isFeeExempt && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                    🎉 100% Fee Exempt
+                  </span>
+                )}
+
+                {/* Age Relaxation Tag */}
+                {match.isAgeEligible ? (
+                  match.ageRelaxationYears > 0 ? (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-950/40 text-blue-300 border border-blue-800/40">
+                      +{match.ageRelaxationYears}y {candidateProfile.category} Relaxed
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                      Age Eligible ({match.calculatedAge} yrs)
+                    </span>
+                  )
+                ) : (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    ⚠️ Age Ineligible
+                  </span>
+                )}
+              </div>
+
+              {match.highlights.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowMatchDetails(!showMatchDetails)}
+                  className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold underline shrink-0"
+                >
+                  {showMatchDetails ? "Hide Factors" : "Why this match?"}
+                </button>
+              )}
+            </div>
+
+            {/* Expanded Match Factors Details */}
+            {showMatchDetails && (
+              <div className="mt-2 pt-2 border-t border-slate-800 text-[11px] space-y-1">
+                {match.highlights.map((h, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>{h}</span>
+                  </div>
+                ))}
+                {match.reasons.map((r, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-rose-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                    <span>{r}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Title */}
         <Link href={`/exams/${recruitment.id}`} className="group-hover:text-blue-400 transition-colors">
