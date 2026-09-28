@@ -310,9 +310,13 @@ export function evaluateEligibilityCompatibility(
     });
   } else {
     const userQual = profile.highestQualification.toUpperCase();
-    const acceptsAnyGraduate = reqQualCodes.includes("ANY_GRADUATE");
+    const acceptsAnyGraduate = reqQualCodes.includes("ANY_GRADUATE") || reqQualCodes.length === 0;
     const graduateTier = [
       "ANY_GRADUATE",
+      "GRADUATION",
+      "GRADUATE",
+      "BACHELORS",
+      "DEGREE",
       "BTECH",
       "BE",
       "BCOM",
@@ -322,11 +326,14 @@ export function evaluateEligibilityCompatibility(
       "MCA",
       "MBA",
       "POST_GRADUATE",
+      "POST_GRADUATION",
+      "MASTERS",
     ];
 
     const isMatch = acceptsAnyGraduate
-      ? graduateTier.includes(userQual)
-      : reqQualCodes.includes(userQual);
+      ? (graduateTier.includes(userQual) || userQual.includes("GRADUAT") || userQual.includes("DEGREE") || userQual.includes("BACHELOR") || userQual.includes("TECH"))
+      : (reqQualCodes.includes(userQual) || reqQualCodes.some((rc) => userQual.includes(rc) || rc.includes(userQual)));
+
 
     if (isMatch) {
       factors.push({
@@ -875,12 +882,13 @@ export function evaluateEligibilityCompatibility(
 
   let determination: EligibilityDeterminationStatus;
   let determinationLabel: "Eligible" | "Potentially eligible" | "Eligibility unclear" | "Not eligible";
+  const hasCoreProfileData = Boolean(profile && profile.dateOfBirth && profile.highestQualification);
 
   if (failedCount > 0) {
     // Definitive failure on one or more mandatory rules
     determination = "NOT_ELIGIBLE";
     determinationLabel = "Not eligible";
-  } else if (!profile || !profile.isCompleted || unavailableCount >= 2) {
+  } else if (!hasCoreProfileData || unavailableCount >= 3) {
     // Core details (qualification, DOB) are incomplete
     determination = "ELIGIBILITY_UNCLEAR";
     determinationLabel = "Eligibility unclear";
@@ -893,6 +901,7 @@ export function evaluateEligibilityCompatibility(
     determination = "ELIGIBLE";
     determinationLabel = "Eligible";
   }
+
 
   return {
     recruitmentId: recruitment.id,
