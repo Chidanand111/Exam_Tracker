@@ -366,3 +366,112 @@ export interface FilterState {
   status: string;
   sortBy: "newest" | "closing_soon" | "exam_date" | "salary" | "vacancies";
 }
+
+// ==========================================
+// Application Preparation Checklist Types
+// ==========================================
+export type ChecklistStageCategory =
+  | "BEFORE_APPLYING"
+  | "DOCUMENT_PREP"
+  | "APPLICATION_FORM"
+  | "POST_SUBMISSION";
+
+export interface RecruitmentChecklistItemData {
+  id: string;
+  recruitmentId?: string | null;
+  title: string;
+  description?: string | null;
+  stageCategory: ChecklistStageCategory;
+  itemOrder: number;
+  isRequired: boolean;
+  isDefault: boolean;
+}
+
+export interface UserChecklistItemData {
+  id: string;
+  userId: string;
+  recruitmentId: string;
+  templateItemId?: string | null;
+  title: string;
+  stageCategory: ChecklistStageCategory;
+  isCompleted: boolean;
+  completedAt?: string | null;
+  notes?: string | null;
+  isCustom: boolean;
+  createdAt: string;
+}
+
+// ==========================================
+// 35. Application Reference & Receipt Vault Types
+// ==========================================
+export interface ApplicationVaultData {
+  id: string;
+  userId: string;
+  recruitmentId: string;
+  recruitment?: RecruitmentItem;
+  applicationNumber?: string | null;
+  registrationNumber?: string | null;
+  rollNumber?: string | null;
+  portalUserId?: string | null;
+  paymentReference?: string | null;
+  transactionId?: string | null;
+  submissionDate?: string | null;
+  applicationPdfUrl?: string | null;
+  paymentReceiptUrl?: string | null;
+  personalNotes?: string | null;
+  isGovernmentVerified: boolean;
+  verificationDisclaimer: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ==========================================
+// 37. Saved Searches & 38. New-Match Discovery
+// ==========================================
+export interface SavedSearchData {
+  id: string;
+  userId: string;
+  name: string;
+  searchQuery?: string | null;
+  filtersJson: string;
+  filters?: Partial<FilterState>;
+  sortPreference: string;
+  notifyNewMatches: boolean;
+  lastMatchedCount: number;
+  lastCheckedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ==========================================
+// 39. Bookmarking & Shortlisting Types
+// ==========================================
+export type ShortlistLifecycleState =
+  | "BOOKMARKED"
+  | "INTERESTED"
+  | "APPLIED"
+  | "COMPLETED";
+
+export interface RecruitmentShortlistData {
+  id: string;
+  userId: string;
+  recruitmentId: string;
+  recruitment: RecruitmentItem;
+  lifecycleState: ShortlistLifecycleState;
+  priority: "HIGH" | "MEDIUM" | "LOW";
+  personalNotes?: string | null;
+  targetPrepDays?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ==========================================
+// 36. Recruitment Comparison Types
+// ==========================================
+export interface RecruitmentComparisonAttribute {
+  key: string;
+  label: string;
+  category: "ELIGIBILITY" | "COMPENSATION" | "DATES" | "PROCESS";
+  values: Record<string, string | number | null | undefined>; // recruitmentId -> display value
+}
+

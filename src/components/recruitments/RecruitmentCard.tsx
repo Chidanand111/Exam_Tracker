@@ -14,6 +14,9 @@ import {
   ShieldCheck,
   Building2,
   FileText,
+  Scale,
+  Lock,
+  FileCheck2,
 } from "lucide-react";
 import { RecruitmentItem, CandidateProfileData } from "@/types";
 import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
@@ -21,6 +24,9 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SalaryBadge } from "@/components/ui/SalaryBadge";
 import { EligibilityBadge } from "@/components/eligibility/EligibilityBadge";
 import { WhyAmIEligibleModal } from "@/components/eligibility/WhyAmIEligibleModal";
+import { ShortlistButton } from "@/components/shortlist/ShortlistButton";
+import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
+import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
 
 interface RecruitmentCardProps {
   recruitment: RecruitmentItem;
@@ -28,6 +34,8 @@ interface RecruitmentCardProps {
   isApplied?: boolean;
   onAppliedSuccess?: () => void;
   onOpenProfile?: () => void;
+  isSelectedForCompare?: boolean;
+  onToggleCompare?: () => void;
 }
 
 export function RecruitmentCard({
@@ -36,12 +44,16 @@ export function RecruitmentCard({
   isApplied = false,
   onAppliedSuccess,
   onOpenProfile,
+  isSelectedForCompare = false,
+  onToggleCompare,
 }: RecruitmentCardProps) {
   const [applied, setApplied] = useState(isApplied);
   const [loading, setLoading] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showMatchDetails, setShowMatchDetails] = useState(false);
   const [showWhyEligibleModal, setShowWhyEligibleModal] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [showVaultModal, setShowVaultModal] = useState(false);
   const [regNo, setRegNo] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [notes, setNotes] = useState("");
@@ -120,7 +132,27 @@ export function RecruitmentCard({
             </div>
           </div>
 
-          <StatusBadge status={recruitment.status} size="sm" />
+          <div className="flex items-center gap-2">
+            {onToggleCompare && (
+              <button
+                type="button"
+                onClick={onToggleCompare}
+                className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  isSelectedForCompare
+                    ? "bg-blue-600/25 border-blue-500 text-blue-300"
+                    : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
+                }`}
+                title="Select for side-by-side comparison"
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span className="text-[10px] hidden sm:inline">
+                  {isSelectedForCompare ? "Comparing" : "Compare"}
+                </span>
+              </button>
+            )}
+            <ShortlistButton recruitmentId={recruitment.id} variant="icon" />
+            <StatusBadge status={recruitment.status} size="sm" />
+          </div>
         </div>
 
         {/* Transparent Eligibility Compatibility Overlay (Indicative, non-destructive) */}
@@ -330,6 +362,27 @@ export function RecruitmentCard({
           )}
         </div>
 
+        {/* Secondary Workflow Buttons: Checklist & Vault */}
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <button
+            type="button"
+            onClick={() => setShowChecklistModal(true)}
+            className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/25 text-blue-300 text-[11px] font-semibold transition-colors"
+          >
+            <FileCheck2 className="w-3.5 h-3.5 text-blue-400" />
+            <span>Prep Checklist</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowVaultModal(true)}
+            className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-300 text-[11px] font-semibold transition-colors"
+          >
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            <span>Receipt Vault</span>
+          </button>
+        </div>
+
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2">
           {/* Apply Officially Button */}
@@ -442,6 +495,27 @@ export function RecruitmentCard({
           onOpenProfile={onOpenProfile}
         />
       )}
+
+      {/* Preparation Checklist Modal */}
+      <ApplicationChecklistModal
+        isOpen={showChecklistModal}
+        onClose={() => setShowChecklistModal(false)}
+        recruitmentId={recruitment.id}
+        recruitmentTitle={recruitment.title}
+        organizationName={recruitment.organization?.name}
+        officialNotificationUrl={recruitment.officialNotificationUrl}
+        officialApplyUrl={recruitment.officialApplyUrl}
+      />
+
+      {/* Application Reference & Receipt Vault Modal */}
+      <ApplicationVaultModal
+        isOpen={showVaultModal}
+        onClose={() => setShowVaultModal(false)}
+        recruitmentId={recruitment.id}
+        recruitmentTitle={recruitment.title}
+        organizationName={recruitment.organization?.name}
+        officialApplyUrl={recruitment.officialApplyUrl}
+      />
     </div>
   );
 }

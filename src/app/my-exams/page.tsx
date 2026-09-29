@@ -16,6 +16,8 @@ import {
   Layers,
   ArrowRight,
   TrendingUp,
+  Lock,
+  FileCheck2,
 } from "lucide-react";
 import { TrackedApplication, StageDetails } from "@/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -23,6 +25,8 @@ import { DynamicStageTimeline } from "@/components/stages/DynamicStageTimeline";
 import { PersonalScheduleModal } from "@/components/dashboard/PersonalScheduleModal";
 import { ResultModal } from "@/components/dashboard/ResultModal";
 import { ReminderModal } from "@/components/dashboard/ReminderModal";
+import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
+import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
 
 export default function MyExamsDashboard() {
   const [applications, setApplications] = useState<TrackedApplication[]>([]);
@@ -34,6 +38,8 @@ export default function MyExamsDashboard() {
   // Modals state
   const [selectedApp, setSelectedApp] = useState<TrackedApplication | null>(null);
   const [selectedStage, setSelectedStage] = useState<StageDetails | null>(null);
+  const [vaultApp, setVaultApp] = useState<TrackedApplication | null>(null);
+  const [checklistApp, setChecklistApp] = useState<TrackedApplication | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
@@ -408,6 +414,26 @@ export default function MyExamsDashboard() {
                       </button>
                     )}
 
+                    {/* Preparation Checklist */}
+                    <button
+                      onClick={() => setChecklistApp(app)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600/15 hover:bg-blue-600/25 text-blue-300 text-xs font-semibold border border-blue-500/30 transition-colors"
+                      title="View and check off preparation items"
+                    >
+                      <FileCheck2 className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Checklist</span>
+                    </button>
+
+                    {/* Application Vault */}
+                    <button
+                      onClick={() => setVaultApp(app)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold border border-amber-500/30 transition-colors"
+                      title="Record and view official registration credentials & receipts"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Vault</span>
+                    </button>
+
                     {/* Set Reminder Button */}
                     <button
                       onClick={() => {
@@ -482,6 +508,31 @@ export default function MyExamsDashboard() {
             }}
           />
         </>
+      )}
+
+      {/* Vault Modal */}
+      {vaultApp && (
+        <ApplicationVaultModal
+          isOpen={Boolean(vaultApp)}
+          onClose={() => setVaultApp(null)}
+          recruitmentId={vaultApp.recruitment.id}
+          recruitmentTitle={vaultApp.recruitment.title}
+          organizationName={vaultApp.recruitment.organization?.name}
+          officialApplyUrl={vaultApp.recruitment.officialApplyUrl}
+        />
+      )}
+
+      {/* Checklist Modal */}
+      {checklistApp && (
+        <ApplicationChecklistModal
+          isOpen={Boolean(checklistApp)}
+          onClose={() => setChecklistApp(null)}
+          recruitmentId={checklistApp.recruitment.id}
+          recruitmentTitle={checklistApp.recruitment.title}
+          organizationName={checklistApp.recruitment.organization?.name}
+          officialNotificationUrl={checklistApp.recruitment.officialNotificationUrl}
+          officialApplyUrl={checklistApp.recruitment.officialApplyUrl}
+        />
       )}
     </div>
   );

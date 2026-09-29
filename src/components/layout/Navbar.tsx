@@ -15,6 +15,8 @@ import {
   ChevronDown,
   CheckCircle2,
   ExternalLink,
+  Star,
+  Scale,
 } from "lucide-react";
 import { UserSession } from "@/types";
 
@@ -140,6 +142,30 @@ export function Navbar() {
             >
               <GraduationCap className="w-4 h-4 text-emerald-400" />
               <span>Graduate Freshers</span>
+            </Link>
+
+            <Link
+              href="/shortlist"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname === "/shortlist"
+                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                  : "text-slate-300 hover:text-amber-300 hover:bg-slate-800/60"
+              }`}
+            >
+              <Star className="w-4 h-4 text-amber-400" />
+              <span>Shortlist</span>
+            </Link>
+
+            <Link
+              href="/compare"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname === "/compare"
+                  ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-300 hover:text-indigo-300 hover:bg-slate-800/60"
+              }`}
+            >
+              <Scale className="w-4 h-4 text-indigo-400" />
+              <span>Compare</span>
             </Link>
 
             <Link

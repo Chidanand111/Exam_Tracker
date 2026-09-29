@@ -8,6 +8,8 @@ import { FilterSidebar } from "@/components/recruitments/FilterSidebar";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
 import { OnboardingModal } from "@/components/profile/OnboardingModal";
 import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
+import { SavedSearchesBar } from "@/components/discover/SavedSearchesBar";
+import { ComparisonFloatingBar } from "@/components/compare/ComparisonFloatingBar";
 
 function DiscoverContent() {
   const searchParams = useSearchParams();
@@ -32,6 +34,50 @@ function DiscoverContent() {
 
   const [recruitments, setRecruitments] = useState<RecruitmentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedToCompare, setSelectedToCompare] = useState<
+    Array<{ id: string; title: string; organizationName?: string }>
+  >([]);
+
+  const handleToggleCompare = (rec: RecruitmentItem) => {
+    setSelectedToCompare((prev) => {
+      const exists = prev.some((r) => r.id === rec.id);
+      if (exists) {
+        return prev.filter((r) => r.id !== rec.id);
+      }
+      if (prev.length >= 4) {
+        alert("You can select up to 4 recruitments for side-by-side comparison.");
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: rec.id,
+          title: rec.title,
+          organizationName: rec.organization?.shortName,
+        },
+      ];
+    });
+  };
+
+  const handleApplySavedSearch = (search: {
+    query: string;
+    filters: Partial<FilterState>;
+    sortBy?: string;
+  }) => {
+    setFilters((prev) => ({
+      ...prev,
+      search: search.query ?? "",
+      qualification: search.filters.qualification || "ALL",
+      fresherOnly: search.filters.fresherOnly ?? false,
+      experienceRequired: search.filters.experienceRequired ?? false,
+      salaryMin: search.filters.salaryMin,
+      ageMax: search.filters.ageMax,
+      category: search.filters.category || "ALL",
+      stateLocation: search.filters.stateLocation || "ALL",
+      status: search.filters.status || "ALL",
+      sortBy: (search.sortBy as any) || "newest",
+    }));
+  };
 
   // Sync state if URL query params change
   useEffect(() => {
@@ -245,6 +291,12 @@ function DiscoverContent() {
         </div>
       ) : null}
 
+      {/* Saved Searches & Quick Filters Bar */}
+      <SavedSearchesBar
+        currentFilters={filters}
+        onApplySavedSearch={handleApplySavedSearch}
+      />
+
       {/* Main Content: Sidebar + Cards Grid */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filter Sidebar */}
@@ -294,12 +346,21 @@ function DiscoverContent() {
                   candidateProfile={candidateProfile}
                   onAppliedSuccess={fetchFiltered}
                   onOpenProfile={() => setShowOnboarding(true)}
+                  isSelectedForCompare={selectedToCompare.some((r) => r.id === recruitment.id)}
+                  onToggleCompare={() => handleToggleCompare(recruitment)}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Floating Comparison Drawer Bar */}
+      <ComparisonFloatingBar
+        selectedRecruitments={selectedToCompare}
+        onRemove={(id) => setSelectedToCompare((prev) => prev.filter((r) => r.id !== id))}
+        onClear={() => setSelectedToCompare([])}
+      />
 
       {/* Onboarding Wizard Modal */}
       <OnboardingModal

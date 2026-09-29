@@ -21,6 +21,9 @@ import {
   ChevronRight,
   Download,
   Sparkles,
+  Lock,
+  FileCheck2,
+  Scale,
 } from "lucide-react";
 import { RecruitmentItem, CandidateProfileData } from "@/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -29,6 +32,9 @@ import { DynamicStageTimeline } from "@/components/stages/DynamicStageTimeline";
 import { EligibilityBadge } from "@/components/eligibility/EligibilityBadge";
 import { WhyAmIEligibleModal } from "@/components/eligibility/WhyAmIEligibleModal";
 import { evaluateEligibilityCompatibility } from "@/lib/eligibility-engine";
+import { ShortlistButton } from "@/components/shortlist/ShortlistButton";
+import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
+import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
 
 export default function RecruitmentDetailPage() {
   const params = useParams();
@@ -38,6 +44,8 @@ export default function RecruitmentDetailPage() {
   const [recruitment, setRecruitment] = useState<RecruitmentItem | null>(null);
   const [profile, setProfile] = useState<CandidateProfileData | null>(null);
   const [showWhyEligibleModal, setShowWhyEligibleModal] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [showVaultModal, setShowVaultModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isApplied, setIsApplied] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -217,10 +225,43 @@ export default function RecruitmentDetailPage() {
               <ExternalLink className="w-4 h-4 text-blue-200" />
             </button>
 
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setShowChecklistModal(true)}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-600/15 hover:bg-blue-600/25 border border-blue-500/30 text-blue-300 text-xs font-semibold transition-colors"
+              >
+                <FileCheck2 className="w-3.5 h-3.5 text-blue-400" />
+                <span>Checklist</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowVaultModal(true)}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-semibold transition-colors"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Vault</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800">
+              <ShortlistButton recruitmentId={recruitment.id} variant="button" />
+
+              <Link
+                href={`/compare?ids=${recruitment.id}`}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+                title="Compare with another recruitment side-by-side"
+              >
+                <Scale className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Compare</span>
+              </Link>
+            </div>
+
             {isApplied ? (
               <Link
                 href="/my-exams"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold hover:bg-emerald-600/30 transition-colors"
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold hover:bg-emerald-600/30 transition-colors"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>✓ Tracking Application</span>
@@ -228,7 +269,7 @@ export default function RecruitmentDetailPage() {
             ) : (
               <button
                 onClick={() => setShowApplyModal(true)}
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-bold transition-colors"
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-bold transition-colors"
               >
                 <BookmarkCheck className="w-4 h-4 text-blue-400" />
                 <span>I've Applied</span>
@@ -685,6 +726,27 @@ export default function RecruitmentDetailPage() {
           analysis={analysis}
         />
       )}
+
+      {/* Preparation Checklist Modal */}
+      <ApplicationChecklistModal
+        isOpen={showChecklistModal}
+        onClose={() => setShowChecklistModal(false)}
+        recruitmentId={recruitment.id}
+        recruitmentTitle={recruitment.title}
+        organizationName={recruitment.organization?.name}
+        officialNotificationUrl={recruitment.officialNotificationUrl}
+        officialApplyUrl={recruitment.officialApplyUrl}
+      />
+
+      {/* Application Reference & Receipt Vault Modal */}
+      <ApplicationVaultModal
+        isOpen={showVaultModal}
+        onClose={() => setShowVaultModal(false)}
+        recruitmentId={recruitment.id}
+        recruitmentTitle={recruitment.title}
+        organizationName={recruitment.organization?.name}
+        officialApplyUrl={recruitment.officialApplyUrl}
+      />
     </div>
   );
 }

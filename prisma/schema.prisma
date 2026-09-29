@@ -17,10 +17,14 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  applications UserApplication[]
-  reminders    Reminder[]
-  notifications Notification[]
-  profile      CandidateProfile?
+  applications       UserApplication[]
+  reminders          Reminder[]
+  notifications      Notification[]
+  profile            CandidateProfile?
+  shortlists         RecruitmentShortlist[]
+  savedSearches      SavedSearch[]
+  vaultRecords       ApplicationVault[]
+  userChecklistItems UserChecklistItem[]
 }
 
 model Organization {
@@ -80,6 +84,10 @@ model Recruitment {
   changeHistory         ChangeHistory[]
   documents             SourceDocument[]
   ruleSets              EligibilityRuleSet[]
+  shortlists            RecruitmentShortlist[]
+  vaultRecords          ApplicationVault[]
+  checklistItems        RecruitmentChecklistItem[]
+  userChecklistItems    UserChecklistItem[]
 }
 
 model RecruitmentPost {
@@ -336,4 +344,127 @@ model EligibilityRuleSet {
 
   @@index([recruitmentId, isActive])
 }
+
+// ==========================================
+// 39. Bookmarking & Shortlisting
+// Lifecycle States: BOOKMARKED, INTERESTED, APPLIED, COMPLETED
+// Bookmarking strictly does NOT imply having applied.
+// ==========================================
+model RecruitmentShortlist {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recruitmentId   String
+  recruitment     Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  lifecycleState  String       @default("BOOKMARKED") // "BOOKMARKED", "INTERESTED", "APPLIED", "COMPLETED"
+  priority        String       @default("MEDIUM")     // "HIGH", "MEDIUM", "LOW"
+  personalNotes   String?
+  targetPrepDays  Int?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([userId, recruitmentId])
+  @@index([userId, lifecycleState])
+}
+
+// ==========================================
+// 37. Saved Searches
+// Preserves search query, filter criteria, and sorting
+// ==========================================
+model SavedSearch {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String       // e.g. "Graduate jobs in Karnataka", "B.Tech government jobs"
+  searchQuery       String?
+  filtersJson       String       // Serialized JSON of all applied filters
+  sortPreference    String       @default("NEWEST")
+  notifyNewMatches  Boolean      @default(true)
+  lastMatchedCount  Int          @default(0)
+  lastCheckedAt     DateTime     @default(now())
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+// ==========================================
+// Application Preparation Checklist
+// Admin-configurable items + User-created personal checklist items
+// ==========================================
+model RecruitmentChecklistItem {
+  id             String       @id @default(cuid())
+  recruitmentId  String?      // Optional: null means universal default checklist item
+  recruitment    Recruitment? @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  title          String       // e.g. "Read official notification", "Prepare photograph (20KB - 50KB JPEG)"
+  description    String?
+  stageCategory  String       @default("BEFORE_APPLYING") // "BEFORE_APPLYING", "DOCUMENT_PREP", "APPLICATION_FORM", "POST_SUBMISSION"
+  itemOrder      Int          @default(0)
+  isRequired     Boolean      @default(true)
+  isDefault      Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  userProgress   UserChecklistItem[]
+
+  @@index([recruitmentId, stageCategory])
+}
+
+model UserChecklistItem {
+  id             String                    @id @default(cuid())
+  userId         String
+  user           User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recruitmentId  String
+  recruitment    Recruitment               @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  templateItemId String?
+  templateItem   RecruitmentChecklistItem? @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
+  title          String                    // Custom title or copied from template
+  stageCategory  String                    @default("BEFORE_APPLYING")
+  isCompleted    Boolean                   @default(false)
+  completedAt    DateTime?
+  notes          String?
+  isCustom       Boolean                   @default(false) // True if candidate added personal item
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  @@index([userId, recruitmentId])
+}
+
+// ==========================================
+// 35. Application Reference & Receipt Vault
+// Securely records external application numbers and receipts
+// Explicitly disclaims government verification
+// ==========================================
+model ApplicationVault {
+  id                      String       @id @default(cuid())
+  userId                  String
+  user                    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recruitmentId           String
+  recruitment             Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  
+  // Official registration credentials recorded after external applying
+  applicationNumber       String?
+  registrationNumber      String?
+  rollNumber              String?
+  portalUserId            String?      // Govt website login User ID
+  paymentReference        String?
+  transactionId           String?
+  submissionDate          DateTime?
+  
+  // Document attachments / references
+  applicationPdfUrl       String?      // Submitted application form PDF
+  paymentReceiptUrl       String?      // Challan / online payment receipt PDF/image
+  personalNotes           String?
+  
+  // Non-official disclosure clause
+  isGovernmentVerified    Boolean      @default(false)
+  verificationDisclaimer  String       @default("Self-Reported Reference: These identifiers and receipts were manually recorded by the applicant and have NOT been verified by official government exam servers.")
+
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  @@unique([userId, recruitmentId])
+  @@index([userId])
+}
+
 
