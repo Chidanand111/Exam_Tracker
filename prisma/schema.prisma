@@ -104,6 +104,9 @@ model Recruitment {
   notes                 RecruitmentNote[]
   versions              RecruitmentVersion[]
   conflicts             InformationConflict[]
+  citations             DataCitation[]
+  reviewItems           ReviewQueueItem[]
+  urlChecks             UrlHealthCheck[]
 }
 
 model RecruitmentPost {
@@ -643,4 +646,117 @@ model DuplicateAlert {
   @@index([recruitmentId1])
   @@index([recruitmentId2])
 }
+
+// ==========================================
+// 57. Citation-Level Data Traceability
+// Pinpoints exact source document page, clause, and raw excerpt for each extracted field
+// ==========================================
+model DataCitation {
+  id                 String       @id @default(cuid())
+  recruitmentId      String
+  recruitment        Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  fieldName          String       // e.g. "vacancies", "minAge", "maxAge", "payScale", "appDeadline", "qualification", "appFee"
+  fieldLabel         String       // e.g. "Total Vacancies", "Age Limit Window"
+  extractedValue     String       // e.g. "14,582 posts", "18 to 30 years as on 01-08-2026"
+  sourceDocumentName String       // e.g. "notice_cgl_2026.pdf"
+  sourceDocumentUrl  String       // URL of the official PDF/Gazette
+  pageNumber         Int?         // e.g. 7
+  sectionClause      String?      // e.g. "Para 2.1 (Vacancies & Reservation)"
+  rawExcerpt         String?      // Verbatim quotation from the official circular
+  confidenceScore    Float?       @default(1.0)
+  isVerified         Boolean      @default(true)
+  verifiedBy         String?      @default("Official Gazette Editorial Team")
+  createdAt          DateTime     @default(now())
+
+  @@index([recruitmentId, fieldName])
+}
+
+// ==========================================
+// 58. Human Review Queue
+// Granular review queue for uncertain, conflicting, low-confidence or broken data
+// ==========================================
+model ReviewQueueItem {
+  id              String       @id @default(cuid())
+  recruitmentId   String?
+  recruitment     Recruitment? @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  itemType        String       // "LOW_CONFIDENCE_FIELD", "MISSING_FIELD", "CONFLICTING_DATES", "AMBIGUOUS_ELIGIBILITY", "BROKEN_OFFICIAL_URL", "CHANGED_SOURCE_DOC"
+  fieldName       String?      // Field under review e.g. "inHandSalaryMax"
+  currentValue    String?
+  proposedValue   String?
+  severity        String       @default("MEDIUM") // "HIGH", "MEDIUM", "LOW"
+  description     String       // Rationale for uncertainty
+  status          String       @default("PENDING_REVIEW") // "PENDING_REVIEW", "APPROVED_FIELD", "REJECTED_FIELD", "MANUALLY_OVERRIDDEN"
+  reviewerEmail   String?
+  resolutionNotes String?
+  reviewedAt      DateTime?
+  createdAt       DateTime     @default(now())
+
+  @@index([status, severity])
+  @@index([recruitmentId])
+}
+
+// ==========================================
+// 59. Audit Logging
+// Immutable audit trail for all administrative actions and data modifications
+// ==========================================
+model AdminAuditLog {
+  id            String    @id @default(cuid())
+  adminEmail    String
+  action        String    // "UPDATE_FIELD", "APPROVE_EXTRACTION", "RESOLVE_CONFLICT", "PUBLISH_CORRIGENDUM", "OVERRIDE_URL", "ARCHIVE_CYCLE", "DUPLICATE_FLAG"
+  entityType    String    // "Recruitment", "OfficialSource", "RecruitmentStage", "ReviewQueueItem", "OfficialDomain"
+  entityId      String
+  entityTitle   String?
+  previousValue String?   // Serialized previous state or value
+  newValue      String?   // Serialized new state or value
+  reason        String?   // Mandatory justification
+  ipAddress     String?
+  timestamp     DateTime  @default(now())
+
+  @@index([adminEmail])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
+
+// ==========================================
+// 60. URL Health Monitoring
+// Tracks accessibility, redirects, and HTTP status codes of official links
+// ==========================================
+model UrlHealthCheck {
+  id                  String       @id @default(cuid())
+  recruitmentId       String?
+  recruitment         Recruitment? @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  sourceId            String?
+  url                 String
+  urlType             String       // "NOTIFICATION_PDF", "APPLY_PORTAL", "ADMIT_CARD", "RESULT_PAGE"
+  statusCode          Int?         // 200, 404, 500, etc.
+  status              String       @default("HEALTHY") // "HEALTHY", "WARNING_REDIRECT", "BROKEN_404", "TIMEOUT", "SSL_ERROR"
+  responseTimeMs      Int?
+  isPdfAccessible     Boolean      @default(true)
+  errorMessage        String?
+  redirectDestination String?
+  lastCheckedAt       DateTime     @default(now())
+
+  @@index([status])
+  @@index([recruitmentId])
+}
+
+// ==========================================
+// 61. Official Domain Verification Registry
+// Prevents spoofing and identifies official vs unauthorized portals
+// ==========================================
+model OfficialDomain {
+  id                String    @id @default(cuid())
+  domain            String    @unique // e.g. "ssc.gov.in", "ibps.in", "upsc.gov.in", "digialm.com"
+  orgName           String    // e.g. "Staff Selection Commission"
+  orgShortName      String    // e.g. "SSC"
+  allowedSubdomains String?   // JSON array or wildcards e.g. "*.ssc.gov.in"
+  sourceType        String    // "GOV_NIC", "AUTONOMOUS_BODY", "EXAM_VENDOR_TCS_ION", "BANKING_INSTITUTE"
+  trustStatus       String    @default("VERIFIED_GOV") // "VERIFIED_GOV", "TRUSTED_VENDOR", "PENDING_REVIEW", "SUSPICIOUS"
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([trustStatus])
+}
+
 

@@ -52,6 +52,13 @@ export async function resolveRecruitment(identifier: string) {
         changeHistory: {
           orderBy: { detectedAt: "desc" },
         },
+        citations: {
+          orderBy: { pageNumber: "asc" },
+        },
+        urlChecks: {
+          orderBy: { lastCheckedAt: "desc" },
+          take: 3,
+        },
       },
     });
 
@@ -94,6 +101,13 @@ export async function resolveRecruitment(identifier: string) {
           },
           changeHistory: {
             orderBy: { detectedAt: "desc" },
+          },
+          citations: {
+            orderBy: { pageNumber: "asc" },
+          },
+          urlChecks: {
+            orderBy: { lastCheckedAt: "desc" },
+            take: 3,
           },
         },
       });

@@ -42,6 +42,9 @@ import { ArchivedBanner } from "./ArchivedBanner";
 import { CycleSelector } from "./CycleSelector";
 import { VersionHistoryModal } from "./VersionHistoryModal";
 import { evaluateEligibilityCompatibility } from "@/lib/eligibility-engine";
+import { NotificationPdfViewerModal } from "@/components/notifications/NotificationPdfViewerModal";
+import { CitationBadge } from "./CitationBadge";
+import { RecruitmentShareModal } from "@/components/sharing/RecruitmentShareModal";
 
 interface Props {
   recruitment: any;
@@ -59,6 +62,9 @@ export function RecruitmentDeepLinkView({
   const [showVaultModal, setShowVaultModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [viewerInitialPage, setViewerInitialPage] = useState<number>(1);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Application Record Modal state
@@ -69,6 +75,17 @@ export function RecruitmentDeepLinkView({
   const [submitting, setSubmitting] = useState(false);
 
   const baseSlug = recruitment.slug || recruitment.id;
+
+  // Build citation lookup by field name
+  const citationsByField = (recruitment.citations || []).reduce((acc: any, c: any) => {
+    acc[c.fieldName] = c;
+    return acc;
+  }, {});
+
+  const handleOpenCitationInDoc = (page: number) => {
+    setViewerInitialPage(page);
+    setShowPdfViewer(true);
+  };
 
   const handleShare = () => {
     if (typeof window !== "undefined") {
@@ -126,12 +143,12 @@ export function RecruitmentDeepLinkView({
           />
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={handleShare}
+              onClick={() => setShowShareModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-xs text-slate-300 transition-colors"
-              title="Copy shareable deep link"
+              title="Share public recruitment opportunity"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>{copiedLink ? "Link Copied!" : "Share Link"}</span>
+              <Share2 className="w-3.5 h-3.5 text-blue-400" />
+              <span>Share</span>
             </button>
             {recruitment.versions && recruitment.versions.length > 0 && (
               <button
@@ -207,9 +224,18 @@ export function RecruitmentDeepLinkView({
               {/* Quick Spec Pills */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Total Vacancies</span>
+                  <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Total Vacancies</span>
+                    </div>
+                    {citationsByField["vacancies"] && (
+                      <CitationBadge
+                        citation={citationsByField["vacancies"]}
+                        onOpenViewer={handleOpenCitationInDoc}
+                        compact
+                      />
+                    )}
                   </div>
                   <div className="text-base font-bold text-slate-100 mt-1">
                     {recruitment.vacancies ? recruitment.vacancies.toLocaleString("en-IN") : "To be notified"}
@@ -217,9 +243,18 @@ export function RecruitmentDeepLinkView({
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>In-Hand Salary</span>
+                  <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>In-Hand Salary</span>
+                    </div>
+                    {citationsByField["payScale"] && (
+                      <CitationBadge
+                        citation={citationsByField["payScale"]}
+                        onOpenViewer={handleOpenCitationInDoc}
+                        compact
+                      />
+                    )}
                   </div>
                   <div className="text-base font-bold text-emerald-400 mt-1">
                     {recruitment.inHandSalaryMin
@@ -229,9 +264,18 @@ export function RecruitmentDeepLinkView({
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Age Window</span>
+                  <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Age Window</span>
+                    </div>
+                    {citationsByField["ageLimit"] && (
+                      <CitationBadge
+                        citation={citationsByField["ageLimit"]}
+                        onOpenViewer={handleOpenCitationInDoc}
+                        compact
+                      />
+                    )}
                   </div>
                   <div className="text-base font-bold text-slate-100 mt-1">
                     {recruitment.minAge && recruitment.maxAge ? `${recruitment.minAge} - ${recruitment.maxAge} yrs` : "As per rules"}
@@ -239,9 +283,18 @@ export function RecruitmentDeepLinkView({
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Deadline</span>
+                  <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Deadline</span>
+                    </div>
+                    {citationsByField["appDeadline"] && (
+                      <CitationBadge
+                        citation={citationsByField["appDeadline"]}
+                        onOpenViewer={handleOpenCitationInDoc}
+                        compact
+                      />
+                    )}
                   </div>
                   <div className="text-base font-bold text-amber-400 mt-1 truncate">
                     {recruitment.appDeadline
@@ -268,6 +321,20 @@ export function RecruitmentDeepLinkView({
                 <ExternalLink className="w-4 h-4" />
               </a>
 
+              {recruitment.officialNotificationUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewerInitialPage(1);
+                    setShowPdfViewer(true);
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>View In-App Notice (PDF)</span>
+                </button>
+              )}
+
               <a
                 href={recruitment.officialNotificationUrl}
                 target="_blank"
@@ -275,7 +342,7 @@ export function RecruitmentDeepLinkView({
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <Download className="w-3.5 h-3.5 text-slate-400" />
-                <span>Official Notification PDF</span>
+                <span>Download Official PDF</span>
               </a>
 
               <button
@@ -751,6 +818,27 @@ export function RecruitmentDeepLinkView({
           </div>
         </div>
       )}
+
+      {/* Official Notification In-App PDF Viewer Modal (Feature 56) */}
+      <NotificationPdfViewerModal
+        isOpen={showPdfViewer}
+        onClose={() => setShowPdfViewer(false)}
+        documentUrl={recruitment.officialNotificationUrl || ""}
+        documentTitle={`${recruitment.title} - Official Notification`}
+        officialSourceUrl={recruitment.officialApplyUrl}
+        documentVersion={recruitment.versions?.[0]?.versionNumber || 1}
+        publicationDate={recruitment.appStartDate}
+        recruitmentTitle={recruitment.title}
+        citations={recruitment.citations || []}
+        initialPage={viewerInitialPage}
+      />
+
+      {/* Recruitment Sharing Modal (Feature 62) */}
+      <RecruitmentShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        recruitment={recruitment}
+      />
     </div>
   );
 }

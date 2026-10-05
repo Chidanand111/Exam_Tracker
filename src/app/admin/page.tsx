@@ -18,11 +18,21 @@ import {
   Copy,
   Layers,
   Search,
+  ListChecks,
+  Lock,
+  Activity,
+  Globe,
 } from "lucide-react";
 import { StructuredRecruitmentExtraction } from "@/lib/ai-extractor";
+import { ReviewQueueTab } from "@/components/admin/ReviewQueueTab";
+import { AuditLogsTab } from "@/components/admin/AuditLogsTab";
+import { UrlHealthTab } from "@/components/admin/UrlHealthTab";
+import { DomainRegistryTab } from "@/components/admin/DomainRegistryTab";
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<"sources" | "duplicates" | "conflicts" | "extractor" | "corrigendum">("sources");
+  const [activeTab, setActiveTab] = useState<
+    "sources" | "duplicates" | "conflicts" | "extractor" | "corrigendum" | "reviewQueue" | "auditLogs" | "urlHealth" | "domains"
+  >("sources");
   const [sources, setSources] = useState<any[]>([]);
   const [changes, setChanges] = useState<any[]>([]);
   const [duplicates, setDuplicates] = useState<any[]>([]);
@@ -403,6 +413,54 @@ export default function AdminDashboardPage() {
         >
           <Clock className="w-3.5 h-3.5" />
           <span>Corrigendum Dispatcher</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("reviewQueue")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "reviewQueue"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <ListChecks className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Human Review Queue</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("auditLogs")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "auditLogs"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Lock className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Immutable Audit Logs</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("urlHealth")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "urlHealth"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5 text-blue-400" />
+          <span>URL Health Monitor</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("domains")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "domains"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5 text-sky-400" />
+          <span>Domain Registry</span>
         </button>
       </div>
 
@@ -912,6 +970,18 @@ export default function AdminDashboardPage() {
         </div>
       </div>
       )}
+
+      {/* Human Review Queue Tab Panel */}
+      {activeTab === "reviewQueue" && <ReviewQueueTab />}
+
+      {/* Immutable Audit Logs Tab Panel */}
+      {activeTab === "auditLogs" && <AuditLogsTab />}
+
+      {/* URL Health Monitor Tab Panel */}
+      {activeTab === "urlHealth" && <UrlHealthTab />}
+
+      {/* Official Domain Registry Tab Panel */}
+      {activeTab === "domains" && <DomainRegistryTab />}
     </div>
   );
 }
