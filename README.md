@@ -41,6 +41,27 @@ Unlike typical static job boards, BharatExam Tracker enforces **strict official 
    - Ingestion workflow for official notification PDFs with strict distinction between **Explicit**, **Inferred**, and **Not Specified** information.
 8. **Personal Reminders**:
    - Presets for 1 day before, 3 days before, 7 days before, or custom date/time.
+9. **Application Preparation Checklist**:
+   - Dynamic preparation checklists across 4 phases: *Before Applying*, *Document Prep*, *Application Form*, and *Post Submission*.
+   - Universal defaults + 139 recruitment-tailored official checklist items + ability for aspirants to add personal custom checklist items.
+10. **Application Reference & Receipt Vault**:
+   - Secure private record for application numbers, registration numbers, roll numbers, portal IDs, payment references, transaction IDs, submission dates, PDFs, and receipts.
+   - 1-click clipboard copy for all identifiers.
+   - Strict non-governmental verification disclosure.
+11. **Recruitment Comparison Workspace**:
+   - Multi-opportunity side-by-side comparative matrix across 16 core attributes (eligibility, age brackets, experience, vacancies, pay scales, dates, shifts, stages, official portal links).
+   - Strict adherence to neutral comparison (zero ranking scores or winner determinations).
+12. **Saved Searches & Instant Presets**:
+   - Save custom filter configurations (degrees, sectors, salaries, locations, fresher eligibility).
+   - Fast presets for *Freshers ₹50k+*, *B.Tech Govt Jobs*, *Central Ministries*, and *Banking Opportunities*.
+13. **New-Match Vacancy Discovery**:
+   - Automated notification triggers alerting aspirants when new vacancies match their saved criteria without taking external actions.
+14. **Bookmarking & 4-Stage Shortlisting**:
+   - Dedicated `/shortlist` workspace tracking opportunities across `Bookmarked`, `Interested`, `Applied`, and `Completed`.
+   - Clear segregation between bookmarks and actual submitted applications.
+15. **17-Factor Transparent Eligibility Engine**:
+   - Multi-tier compatibility classification (`Eligible`, `Potentially Eligible`, `Eligibility Unclear`, `Not Eligible`).
+   - Detailed breakdown explaining degree, branch, age as on cut-off date, domicile, reservation, and fee relaxations with official notification clauses.
 
 ---
 
@@ -85,6 +106,19 @@ node scripts/seed.mjs
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🚀 Vercel Deployment Configuration
+
+When deploying on Vercel, ensure the following Environment Variables are configured in your Vercel Project Settings (**Settings** $\rightarrow$ **Environment Variables**):
+
+| Key | Description | Example |
+|---|---|---|
+| `DATABASE_URL` | Neon pooled connection string with `pgbouncer=true` | `postgresql://user:pass@ep-xyz-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&pgbouncer=true` |
+| `DIRECT_URL` | Neon direct connection string (no pgbouncer) | `postgresql://user:pass@ep-xyz-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require` |
+| `JWT_SECRET` | Secret key for JWT session cookies | `your-secure-secret-key` |
+| `NEXT_PUBLIC_APP_URL` | Canonical public URL of your deployment | `https://exam-tracker-blue.vercel.app` |
 
 ---
 
