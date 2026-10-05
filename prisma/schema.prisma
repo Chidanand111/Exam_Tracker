@@ -41,6 +41,7 @@ model Organization {
 
   recruitments    Recruitment[]
   sources         OfficialSource[]
+  families        RecruitmentFamily[]
 }
 
 model Recruitment {
@@ -78,7 +79,17 @@ model Recruitment {
   lastOfficialVerifiedAt DateTime                @default(now())
   createdAt             DateTime                 @default(now())
   updatedAt             DateTime                 @updatedAt
-
+  slug                  String?                  @unique
+  sourceReliabilityState String                  @default("VERIFIED_OFFICIAL") // "VERIFIED_OFFICIAL", "OFFICIAL_SOURCE_FOUND", "PENDING_REVIEW", "CONFLICTING_INFORMATION", "OUTDATED", "ARCHIVED"
+  sourceReliabilityNote  String?
+  verifiedSourcesCount   Int                     @default(1)
+  lifecycleStage         String                  @default("APPLICATIONS_OPEN") // "DRAFT", "PUBLISHED", "APPLICATIONS_OPEN", "APPLICATIONS_CLOSED", "EXAMINATION_PROCESS", "SELECTION_PROCESS", "FINAL_RESULT", "COMPLETED", "ARCHIVED"
+  isArchived             Boolean                 @default(false)
+  familyId               String?
+  family                 RecruitmentFamily?      @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  cycleYear              Int?
+  cycleName              String?
+  
   posts                 RecruitmentPost[]
   qualifications        RecruitmentQualification[]
   stages                RecruitmentStage[]
@@ -91,6 +102,8 @@ model Recruitment {
   checklistItems        RecruitmentChecklistItem[]
   userChecklistItems    UserChecklistItem[]
   notes                 RecruitmentNote[]
+  versions              RecruitmentVersion[]
+  conflicts             InformationConflict[]
 }
 
 model RecruitmentPost {
@@ -529,3 +542,105 @@ model AccountDeletionRequest {
   
   createdAt       DateTime  @default(now())
 }
+
+// ==========================================
+// 53. Recruitment Cycles & Families
+// Groups recurring exams (e.g. SSC CGL 2025, 2026, 2027) with independent cycles
+// ==========================================
+model RecruitmentFamily {
+  id               String        @id @default(cuid())
+  slug             String        @unique // e.g. "ssc-cgl", "ibps-po", "upsc-cse", "rrb-ntpc"
+  name             String        // e.g. "SSC Combined Graduate Level (CGL)"
+  shortCode        String        // e.g. "SSC_CGL"
+  orgId            String
+  organization     Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  description      String?
+  typicalFrequency String?       @default("Annual") // "Annual", "Bi-Annual", "Ad-hoc"
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  cycles           Recruitment[]
+
+  @@index([orgId])
+}
+
+// ==========================================
+// 54. Versioned Recruitment Information
+// Maintains version snapshots & diff inspectability
+// ==========================================
+model RecruitmentVersion {
+  id            String       @id @default(cuid())
+  recruitmentId String
+  recruitment   Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  versionNumber Int          // 1, 2, 3...
+  changeSummary String       // e.g. "Corrigendum 01/2026: Application deadline extended to 27 July 2026"
+  snapshotJson  String       // Serialized complete state of recruitment at this version
+  changedFields Json?        // e.g. ["appDeadline", "vacancies", "ageLimit"]
+  author        String?      @default("Official Source Monitoring")
+  publishedAt   DateTime     @default(now())
+
+  @@unique([recruitmentId, versionNumber])
+  @@index([recruitmentId])
+}
+
+// ==========================================
+// 50 & 51. Source Reliability & Conflicting Information Detection
+// Records conflicts across official sources without silent overwrites
+// ==========================================
+model InformationConflict {
+  id               String       @id @default(cuid())
+  recruitmentId    String
+  recruitment      Recruitment  @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  fieldName        String       // e.g. "appDeadline", "vacancies", "examDate", "minAge"
+  fieldLabel       String       // e.g. "Application Last Date"
+  
+  // First Source
+  source1Name      String       // e.g. "Official Notification PDF (Clause 4.1)"
+  source1Url       String
+  source1Value     String       // e.g. "2026-07-24"
+  source1Timestamp DateTime     @default(now())
+  
+  // Second Source
+  source2Name      String       // e.g. "Commission Application Portal Banner"
+  source2Url       String
+  source2Value     String       // e.g. "2026-07-27"
+  source2Timestamp DateTime     @default(now())
+  
+  // Resolution State
+  status           String       @default("CONFLICT_DETECTED") // "CONFLICT_DETECTED", "UNDER_REVIEW", "RESOLVED_SOURCE1", "RESOLVED_SOURCE2", "RESOLVED_CORRIGENDUM"
+  resolutionNotes  String?
+  resolvedValue    String?
+  resolvedAt       DateTime?
+  resolvedBy       String?
+  
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([recruitmentId, status])
+}
+
+// ==========================================
+// 55. Duplicate Detection Engine
+// Multi-signal matching alerts for candidate duplicates
+// ==========================================
+model DuplicateAlert {
+  id               String       @id @default(cuid())
+  recruitmentId1   String       // Existing or primary record
+  recruitmentId2   String       // New or suspected duplicate candidate
+  title1           String
+  title2           String
+  orgShortName     String
+  similarityScore  Float        // 0.0 to 100.0%
+  signalsBreakdown Json         // Details of which signals matched (org, title, notif, url, posts, vacancies, hash)
+  status           String       @default("PENDING_REVIEW") // "PENDING_REVIEW", "CONFIRMED_DUPLICATE", "FALSE_POSITIVE", "MERGED"
+  reviewNotes      String?
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([status])
+  @@index([recruitmentId1])
+  @@index([recruitmentId2])
+}
+

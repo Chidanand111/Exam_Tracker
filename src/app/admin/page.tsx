@@ -15,15 +15,22 @@ import {
   Plus,
   ArrowRight,
   Database,
+  Copy,
+  Layers,
+  Search,
 } from "lucide-react";
 import { StructuredRecruitmentExtraction } from "@/lib/ai-extractor";
 
 export default function AdminDashboardPage() {
+  const [activeTab, setActiveTab] = useState<"sources" | "duplicates" | "conflicts" | "extractor" | "corrigendum">("sources");
   const [sources, setSources] = useState<any[]>([]);
   const [changes, setChanges] = useState<any[]>([]);
+  const [duplicates, setDuplicates] = useState<any[]>([]);
+  const [conflicts, setConflicts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [crawling, setCrawling] = useState(false);
   const [crawlFeedback, setCrawlFeedback] = useState<string | null>(null);
+  const [scanningDuplicates, setScanningDuplicates] = useState(false);
 
   // AI Extraction Simulator state
   const [rawNoticeText, setRawNoticeText] = useState(
@@ -48,6 +55,8 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     fetchAdminData();
+    fetchDuplicates();
+    fetchConflicts();
   }, []);
 
   const fetchAdminData = async () => {
@@ -63,6 +72,82 @@ export default function AdminDashboardPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDuplicates = async () => {
+    try {
+      const res = await fetch("/api/admin/duplicates");
+      if (res.ok) {
+        const data = await res.json();
+        setDuplicates(data.alerts || []);
+      }
+    } catch (err) {
+      console.error("Failed to load duplicates:", err);
+    }
+  };
+
+  const fetchConflicts = async () => {
+    try {
+      const res = await fetch("/api/admin/conflicts");
+      if (res.ok) {
+        const data = await res.json();
+        setConflicts(data.conflicts || []);
+      }
+    } catch (err) {
+      console.error("Failed to load conflicts:", err);
+    }
+  };
+
+  const handleRunDuplicateScan = async () => {
+    setScanningDuplicates(true);
+    try {
+      const res = await fetch("/api/admin/duplicates", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Duplicate scan finished: ${data.scanResult?.scannedCount} recruitments scanned, ${data.scanResult?.newAlertsCount} alerts created.`);
+        fetchDuplicates();
+      } else {
+        alert(data.error || "Failed to run scan");
+      }
+    } catch {
+      alert("Error contacting duplicate detection engine");
+    } finally {
+      setScanningDuplicates(false);
+    }
+  };
+
+  const handleResolveDuplicate = async (id: string, status: string) => {
+    try {
+      const res = await fetch(`/api/admin/duplicates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, reviewNotes: `Reviewed and set to ${status} by admin.` }),
+      });
+      if (res.ok) {
+        fetchDuplicates();
+      }
+    } catch {
+      alert("Failed to update duplicate alert");
+    }
+  };
+
+  const handleResolveConflict = async (id: string, status: string, resolvedValue?: string) => {
+    try {
+      const res = await fetch(`/api/admin/conflicts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status,
+          resolvedValue,
+          resolutionNotes: `Resolved by Portal Officer via ${status}.`,
+        }),
+      });
+      if (res.ok) {
+        fetchConflicts();
+      }
+    } catch {
+      alert("Failed to resolve conflict");
     }
   };
 
@@ -248,7 +333,294 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Grid of Sections: Source Registry & Recent Corrigendums */}
+      {/* Admin Tab Navigation */}
+      <div className="flex space-x-2 border-b border-slate-800 pb-3 overflow-x-auto text-xs font-semibold">
+        <button
+          onClick={() => setActiveTab("sources")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "sources"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Database className="w-3.5 h-3.5" />
+          <span>Official Sources & Registry</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("duplicates")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "duplicates"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Copy className="w-3.5 h-3.5" />
+          <span>Duplicate Detection Engine</span>
+          {duplicates.filter((d) => d.status === "PENDING_REVIEW").length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-mono">
+              {duplicates.filter((d) => d.status === "PENDING_REVIEW").length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("conflicts")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "conflicts"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+          <span>Conflicting Information Review</span>
+          {conflicts.filter((c) => c.status === "CONFLICT_DETECTED" || c.status === "UNDER_REVIEW").length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-bold text-[10px] font-mono">
+              {conflicts.filter((c) => c.status === "CONFLICT_DETECTED" || c.status === "UNDER_REVIEW").length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("extractor")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "extractor"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Cpu className="w-3.5 h-3.5" />
+          <span>AI Notice Extractor</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("corrigendum")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "corrigendum"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>Corrigendum Dispatcher</span>
+        </button>
+      </div>
+
+      {/* Duplicate Detection Engine Tab Panel */}
+      {activeTab === "duplicates" && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <Copy className="w-4 h-4 text-blue-400" />
+                  <span>Duplicate Detection Engine (Multi-Signal Analysis)</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                  Scans recruitment notices using 8 weighted signals: Organization, title dice tokens, notification number, URL domain/path, vacancy equality, post names overlap, publication date proximity, and SHA-256 document hashes. Potential duplicates are flagged for editorial review instead of auto-merging.
+                </p>
+              </div>
+
+              <button
+                onClick={handleRunDuplicateScan}
+                disabled={scanningDuplicates}
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 shrink-0 transition-colors disabled:opacity-50"
+              >
+                <Search className={`w-3.5 h-3.5 ${scanningDuplicates ? "animate-spin" : ""}`} />
+                <span>{scanningDuplicates ? "Analyzing Signals..." : "Run Multi-Signal Scan"}</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {duplicates.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500 bg-slate-950/60 rounded-2xl border border-slate-800">
+                  No duplicate alerts currently recorded. Click "Run Multi-Signal Scan" to evaluate all active recruitments.
+                </div>
+              ) : (
+                duplicates.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-200">
+                          Match Similarity: <span className="text-rose-400">{alert.similarityScore.toFixed(1)}%</span>
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                          {alert.orgShortName}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                          alert.status === "PENDING_REVIEW"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                            : alert.status === "CONFIRMED_DUPLICATE"
+                            ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                            : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                        }`}
+                      >
+                        {alert.status.replace("_", " ")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">
+                          Primary Record A
+                        </span>
+                        <div className="font-semibold text-slate-200">{alert.title1}</div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">
+                          Suspected Candidate B
+                        </span>
+                        <div className="font-semibold text-slate-200">{alert.title2}</div>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                      <span className="font-semibold text-slate-300">Engine Signal Analysis: </span>
+                      {alert.reviewNotes}
+                    </div>
+
+                    {alert.status === "PENDING_REVIEW" && (
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          onClick={() => handleResolveDuplicate(alert.id, "FALSE_POSITIVE")}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+                        >
+                          Mark False Positive
+                        </button>
+                        <button
+                          onClick={() => handleResolveDuplicate(alert.id, "CONFIRMED_DUPLICATE")}
+                          className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors"
+                        >
+                          Confirm Duplicate
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Conflicting Information Review Tab Panel */}
+      {activeTab === "conflicts" && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Conflicting Official Information Detection & Editorial Resolution</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                When official sources publish contradictory details (e.g., notification PDF last date vs portal banner extension), both sources are logged with timestamps. Review discrepancies below and resolve them via official corrigendum confirmation without silent data loss.
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {conflicts.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500 bg-slate-950/60 rounded-2xl border border-slate-800">
+                  No active information conflicts detected across commission channels.
+                </div>
+              ) : (
+                conflicts.map((conf) => (
+                  <div
+                    key={conf.id}
+                    className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                      <div>
+                        <span className="text-xs font-bold text-slate-200">
+                          {conf.recruitment?.title || "Recruitment Notice"}
+                        </span>
+                        <span className="text-[11px] text-amber-400 font-mono block">
+                          Discrepancy: {conf.fieldLabel} ({conf.fieldName})
+                        </span>
+                      </div>
+
+                      <span
+                        className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                          conf.status === "CONFLICT_DETECTED"
+                            ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                            : conf.status === "UNDER_REVIEW"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                            : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                        }`}
+                      >
+                        {conf.status.replace("_", " ")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      {/* Source 1 */}
+                      <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                          <span>Source A: {conf.source1Name}</span>
+                          <a href={conf.source1Url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                            View Source
+                          </a>
+                        </div>
+                        <div className="text-sm font-bold text-amber-300 pt-1">{conf.source1Value}</div>
+                      </div>
+
+                      {/* Source 2 */}
+                      <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                          <span>Source B: {conf.source2Name}</span>
+                          <a href={conf.source2Url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                            View Source
+                          </a>
+                        </div>
+                        <div className="text-sm font-bold text-emerald-300 pt-1">{conf.source2Value}</div>
+                      </div>
+                    </div>
+
+                    {conf.resolutionNotes && (
+                      <div className="text-[11px] text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                        <span className="font-semibold text-slate-300">Resolution Context: </span>
+                        {conf.resolutionNotes}
+                      </div>
+                    )}
+
+                    {conf.status === "CONFLICT_DETECTED" && (
+                      <div className="flex items-center justify-end gap-2 pt-1 text-xs">
+                        <button
+                          onClick={() => handleResolveConflict(conf.id, "RESOLVED_SOURCE1", conf.source1Value)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                        >
+                          Accept Source A
+                        </button>
+                        <button
+                          onClick={() => handleResolveConflict(conf.id, "RESOLVED_SOURCE2", conf.source2Value)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                        >
+                          Accept Source B
+                        </button>
+                        <button
+                          onClick={() => handleResolveConflict(conf.id, "RESOLVED_CORRIGENDUM", conf.source2Value)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors"
+                        >
+                          Resolve via Official Corrigendum
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grid of Sections: Source Registry & Recent Corrigendums (Only shown when activeTab === 'sources' or relevant) */}
+      {(activeTab === "sources" || activeTab === "extractor" || activeTab === "corrigendum") && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Monitored Official Sources Registry (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
@@ -539,6 +911,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

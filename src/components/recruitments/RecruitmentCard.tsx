@@ -248,12 +248,51 @@ export function RecruitmentCard({
           </div>
         </div>
 
-        {/* Title */}
-        <Link href={`/exams/${recruitment.id}`} className="group-hover:text-blue-400 transition-colors">
-          <h3 className="font-bold text-white text-base leading-snug tracking-tight mb-2">
-            {recruitment.title}
-          </h3>
-        </Link>
+        {/* Title & Reliability Badges */}
+        <div className="space-y-1.5 mb-2">
+          <Link
+            href={`/recruitments/${(recruitment as any).slug || recruitment.id}`}
+            className="group-hover:text-blue-400 transition-colors block"
+          >
+            <h3 className="font-bold text-white text-base leading-snug tracking-tight">
+              {recruitment.title}
+            </h3>
+          </Link>
+
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {(recruitment as any).sourceReliabilityState && (
+              <span
+                className={`text-[9px] px-2 py-0.5 rounded-full border font-medium ${
+                  (recruitment as any).sourceReliabilityState === "VERIFIED_OFFICIAL"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : (recruitment as any).sourceReliabilityState === "CONFLICTING_INFORMATION"
+                    ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                    : (recruitment as any).sourceReliabilityState === "ARCHIVED"
+                    ? "bg-purple-500/10 text-purple-300 border-purple-500/30"
+                    : "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                }`}
+              >
+                {(recruitment as any).sourceReliabilityState === "VERIFIED_OFFICIAL"
+                  ? "✓ Verified Official Source"
+                  : (recruitment as any).sourceReliabilityState === "CONFLICTING_INFORMATION"
+                  ? "⚠ Conflicting Notices Detected"
+                  : (recruitment as any).sourceReliabilityState === "ARCHIVED"
+                  ? "Archived Historical Cycle"
+                  : "Official Source Found"}
+              </span>
+            )}
+            {(recruitment as any).isArchived && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+                Historical Archive
+              </span>
+            )}
+            {(recruitment as any).cycleName && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+                {(recruitment as any).cycleName}
+              </span>
+            )}
+          </div>
+        </div>
 
         {/* Short Description */}
         <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">

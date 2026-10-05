@@ -16,9 +16,19 @@ export async function GET(req: Request) {
     const stateLocation = searchParams.get("stateLocation");
     const status = searchParams.get("status");
     const sortBy = searchParams.get("sort") || "newest";
+    const includeArchived = searchParams.get("includeArchived") === "true";
+    const lifecycleStage = searchParams.get("lifecycle");
 
     const andConditions: any[] = [];
     const where: any = {};
+
+    // 0. Archival Lifecycle Filter: Do not show archived in active discovery by default
+    if (!includeArchived) {
+      where.isArchived = false;
+    }
+    if (lifecycleStage && lifecycleStage !== "ALL") {
+      where.lifecycleStage = lifecycleStage;
+    }
 
     // 1. Search Query: Case-insensitive across title, description, org name, and posts
     if (search && search.length > 0) {
@@ -153,6 +163,13 @@ export async function GET(req: Request) {
         changeHistory: {
           orderBy: { detectedAt: "desc" },
           take: 3,
+        },
+        family: {
+          select: { id: true, name: true, slug: true, shortCode: true },
+        },
+        conflicts: {
+          where: { status: { in: ["CONFLICT_DETECTED", "UNDER_REVIEW"] } },
+          select: { id: true, fieldName: true, fieldLabel: true, status: true },
         },
       },
     });

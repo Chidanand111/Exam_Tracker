@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2, WifiOff } from "lucide-react";
+import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2, WifiOff, Archive } from "lucide-react";
 import { RecruitmentItem, FilterState, CandidateProfileData } from "@/types";
 import { FilterSidebar } from "@/components/recruitments/FilterSidebar";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
@@ -34,6 +34,8 @@ function DiscoverContent() {
     sortBy: (searchParams.get("sort") as any) || "newest",
   });
 
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [lifecycleStage, setLifecycleStage] = useState("ALL");
   const [recruitments, setRecruitments] = useState<RecruitmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUsingCache, setIsUsingCache] = useState(false);
@@ -123,7 +125,7 @@ function DiscoverContent() {
 
   useEffect(() => {
     fetchFiltered();
-  }, [filters]);
+  }, [filters, includeArchived, lifecycleStage]);
 
   const fetchFiltered = async () => {
     setLoading(true);
@@ -139,6 +141,8 @@ function DiscoverContent() {
       if (filters.category && filters.category !== "ALL") params.set("category", filters.category);
       if (filters.stateLocation && filters.stateLocation !== "ALL") params.set("stateLocation", filters.stateLocation);
       if (filters.status && filters.status !== "ALL") params.set("status", filters.status);
+      if (includeArchived) params.set("includeArchived", "true");
+      if (lifecycleStage && lifecycleStage !== "ALL") params.set("lifecycle", lifecycleStage);
       params.set("sort", filters.sortBy);
 
       const res = await fetchWithRetry(`/api/recruitments?${params.toString()}`, {}, 3, 800);
@@ -334,17 +338,44 @@ function DiscoverContent() {
             </div>
           )}
 
-          {/* Active summary bar */}
-          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-            <span>
-              Showing <strong className="text-white">{displayedRecruitments.length}</strong> verified opportunities
-              {profileMatchSort && <span className="text-purple-400 ml-1 font-semibold">(Ranked by profile match score)</span>}
-            </span>
-            {filters.fresherOnly && (
-              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Freshers (0 Yrs Exp) Filter Active
-              </span>
-            )}
+          {/* Active summary bar & Lifecycle controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400 px-1 bg-slate-900/40 p-2.5 rounded-xl border border-slate-800">
+            <div>
+              Showing <strong className="text-white">{displayedRecruitments.length}</strong> opportunities
+              {profileMatchSort && <span className="text-purple-400 ml-1 font-semibold">(Ranked by profile match)</span>}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Lifecycle Stage Filter */}
+              <select
+                aria-label="Filter by lifecycle stage"
+                value={lifecycleStage}
+                onChange={(e) => setLifecycleStage(e.target.value)}
+                className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[11px] text-slate-200 focus:outline-none"
+              >
+                <option value="ALL">All Lifecycle Stages</option>
+                <option value="APPLICATIONS_OPEN">Applications Open</option>
+                <option value="EXAMINATION_PROCESS">Examination Process</option>
+                <option value="SELECTION_PROCESS">Selection Process</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="ARCHIVED">Archived Cycles</option>
+              </select>
+
+              {/* Archive Toggle */}
+              <button
+                type="button"
+                onClick={() => setIncludeArchived(!includeArchived)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors flex items-center gap-1.5 ${
+                  includeArchived
+                    ? "bg-purple-600/20 border-purple-500 text-purple-300"
+                    : "bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200"
+                }`}
+                title="Include completed historical recruitment cycles preserved for syllabus and cutoff reference"
+              >
+                <Archive className="w-3 h-3 text-purple-400" />
+                <span>{includeArchived ? "Archived: Included" : "Include Archived"}</span>
+              </button>
+            </div>
           </div>
 
           {loading ? (

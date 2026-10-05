@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogIn, GraduationCap, ShieldCheck, CheckCircle2, UserCheck } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -34,7 +37,8 @@ export default function LoginPage() {
         throw new Error(data.error || "Authentication failed");
       }
 
-      router.push("/my-exams");
+      const destination = returnUrl || (data.user?.role === "ADMIN" ? "/admin" : "/my-exams");
+      router.push(destination);
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -54,7 +58,9 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Demo login failed");
-      router.push("/my-exams");
+      
+      const destination = returnUrl || (data.user?.role === "ADMIN" ? "/admin" : "/my-exams");
+      router.push(destination);
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -189,5 +195,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-xs text-slate-500">
+          Loading authentication...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
