@@ -105,6 +105,21 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/help" className="hover:text-blue-400">
+                  Support & Help Center
+                </Link>
+              </li>
+              <li>
+                <Link href="/trust" className="hover:text-emerald-400">
+                  Trust & Transparency Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-center" className="hover:text-purple-400">
+                  Privacy Center & Vault
+                </Link>
+              </li>
+              <li>
                 <Link href="/admin" className="hover:text-amber-400">
                   Official Source Monitoring
                 </Link>

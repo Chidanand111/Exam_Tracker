@@ -9,9 +9,12 @@ import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
 import { OnboardingModal } from "@/components/profile/OnboardingModal";
 import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
 import { SavedSearchesBar } from "@/components/discover/SavedSearchesBar";
-import { ComparisonFloatingBar } from "@/components/compare/ComparisonFloatingBar";
 import { fetchWithRetry, saveCachedRecruitments, getCachedRecruitments } from "@/lib/network";
 import { RecruitmentCardSkeleton } from "@/components/ui/Skeleton";
+import { IntelligentSearchSuggestions } from "@/components/search/IntelligentSearchSuggestions";
+import { InterpretedQueryBadges } from "@/components/search/InterpretedQueryBadges";
+import { parseNaturalLanguageQuery, InterpretedFilter } from "@/lib/search-query-parser";
+import { ComparisonFloatingBar } from "@/components/compare/ComparisonFloatingBar";
 
 function DiscoverContent() {
   const searchParams = useSearchParams();
@@ -43,6 +46,48 @@ function DiscoverContent() {
   const [selectedToCompare, setSelectedToCompare] = useState<
     Array<{ id: string; title: string; organizationName?: string }>
   >([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [interpretedFilters, setInterpretedFilters] = useState<InterpretedFilter[]>([]);
+
+  const handleSearchChange = (rawText: string) => {
+    setFilters((prev) => ({ ...prev, search: rawText }));
+
+    // Natural Language Query Understanding (Requirement 69)
+    if (rawText.length > 5) {
+      const parsed = parseNaturalLanguageQuery(rawText);
+      if (parsed.filters.length > 0) {
+        setInterpretedFilters(parsed.filters);
+        setFilters((prev) => ({
+          ...prev,
+          search: parsed.cleanQuery || prev.search,
+          qualification: parsed.params.qualification || prev.qualification,
+          stateLocation: parsed.params.location || prev.stateLocation,
+          fresherOnly: parsed.params.fresher !== undefined ? parsed.params.fresher : prev.fresherOnly,
+          category: parsed.params.category || prev.category,
+          salaryMin: parsed.params.minSalary || prev.salaryMin,
+        }));
+      }
+    }
+  };
+
+  const handleSelectSuggestion = (suggestionValue: string) => {
+    handleSearchChange(suggestionValue);
+    setShowSuggestions(false);
+  };
+
+  const handleRemoveInterpretedFilter = (key: string) => {
+    setInterpretedFilters((prev) => prev.filter((f) => f.key !== key));
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (key === "qualification") next.qualification = "ALL";
+      if (key === "location") next.stateLocation = "ALL";
+      if (key === "fresher") next.fresherOnly = false;
+      if (key === "category") next.category = "ALL";
+      if (key === "minSalary") next.salaryMin = undefined;
+      if (key === "closingSoon") next.status = "ALL";
+      return next;
+    });
+  };
 
   const handleToggleCompare = (rec: RecruitmentItem) => {
     setSelectedToCompare((prev) => {
@@ -208,18 +253,34 @@ function DiscoverContent() {
           </p>
         </div>
 
-        {/* Inline Search Input */}
+        {/* Inline Search Input with Intelligent Suggestions (Requirement 68) */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search keywords, posts, boards..."
+            placeholder="Search e.g. B.Tech jobs in Karnataka..."
             value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            onFocus={() => setShowSuggestions(true)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-sm"
+          />
+          <IntelligentSearchSuggestions
+            query={filters.search}
+            isOpen={showSuggestions}
+            onClose={() => setShowSuggestions(false)}
+            onSelectSuggestion={handleSelectSuggestion}
           />
         </div>
       </div>
+
+      {/* Interpreted Natural Language Query Badges (Requirement 69) */}
+      {interpretedFilters.length > 0 && (
+        <InterpretedQueryBadges
+          filters={interpretedFilters}
+          onRemoveFilter={handleRemoveInterpretedFilter}
+          onClearAll={() => setInterpretedFilters([])}
+        />
+      )}
 
       {/* Candidate Personalization Banners */}
       {candidateProfile && candidateProfile.isCompleted ? (
@@ -419,7 +480,7 @@ function DiscoverContent() {
       {/* Floating Comparison Drawer Bar */}
       <ComparisonFloatingBar
         selectedRecruitments={selectedToCompare}
-        onRemove={(id) => setSelectedToCompare((prev) => prev.filter((r) => r.id !== id))}
+        onRemove={(id: string) => setSelectedToCompare((prev) => prev.filter((r) => r.id !== id))}
         onClear={() => setSelectedToCompare([])}
       />
 

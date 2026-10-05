@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { advanceStageOutcome } from "@/lib/stage-engine";
+import { recordApplicationActivity } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,31 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       stageId,
       outcome,
       userNotes,
+    });
+
+    // Record Activity (Requirement 64)
+    const activityTitle =
+      outcome === "SELECTED_FOR_NEXT"
+        ? "User marked 'Selected for next stage'"
+        : outcome === "FINAL_SELECTED"
+        ? "User marked 'Final Selected'"
+        : outcome === "NOT_SELECTED"
+        ? "User marked 'Not Selected'"
+        : "Result checked";
+
+    const activityType =
+      outcome === "SELECTED_FOR_NEXT"
+        ? "NEXT_STAGE_ACTIVATED"
+        : outcome === "NOT_SELECTED"
+        ? "NOT_SELECTED"
+        : "RESULT_CHECKED";
+
+    await recordApplicationActivity({
+      applicationId: params.id,
+      activityType: activityType as any,
+      title: activityTitle,
+      description: userNotes || `Outcome set to ${outcome.replace(/_/g, " ")}`,
+      metadata: { stageId, outcome },
     });
 
     return NextResponse.json(result);

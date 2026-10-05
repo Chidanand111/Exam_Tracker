@@ -27,6 +27,8 @@ import { ResultModal } from "@/components/dashboard/ResultModal";
 import { ReminderModal } from "@/components/dashboard/ReminderModal";
 import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
 import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
+import { ApplicationActivityFeed } from "@/components/applications/ApplicationActivityFeed";
+import { AddToCalendarButton } from "@/components/calendar/AddToCalendarButton";
 
 export default function MyExamsDashboard() {
   const [applications, setApplications] = useState<TrackedApplication[]>([]);
@@ -383,6 +385,14 @@ export default function MyExamsDashboard() {
                   }}
                 />
 
+                {/* Personal Application Activity History Feed (Requirement 64) */}
+                <div className="pt-2 border-t border-slate-800/80">
+                  <ApplicationActivityFeed
+                    activities={(app as any).activities || []}
+                    recruitmentTitle={app.recruitment.title}
+                  />
+                </div>
+
                 {/* Bottom Action Buttons: Download Admit Card, View Details, Set Reminder, Record Result */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800">
                   <div className="flex flex-wrap items-center gap-2">
@@ -446,6 +456,16 @@ export default function MyExamsDashboard() {
                       <Bell className="w-3.5 h-3.5 text-amber-400" />
                       <span>Set Reminder</span>
                     </button>
+
+                    {/* External Calendar Integration (Requirement 65) */}
+                    <AddToCalendarButton
+                      applicationId={app.id}
+                      title={`Exam: ${app.recruitment.title}`}
+                      description={`Official Government Exam for ${app.recruitment.organization.name}. Tracked via BharatExam Tracker.`}
+                      startDate={userSchedule?.examDate || app.recruitment.appDeadline}
+                      location={userSchedule?.centerAddress || userSchedule?.examCenterName || "Center listed on Admit Card"}
+                      type="exam"
+                    />
                   </div>
 
                   <Link

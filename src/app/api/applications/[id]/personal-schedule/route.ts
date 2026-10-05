@@ -103,6 +103,16 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       });
     }
 
+    // Record Activity (Requirement 64)
+    await prisma.applicationActivity.create({
+      data: {
+        applicationId: application.id,
+        activityType: "EXAM_SCHEDULE_ADDED",
+        title: "Personal exam date added",
+        description: `Exam set for ${targetExamDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}, ${shiftName} at ${examTime}${examCenterName ? ` (${examCenterName})` : ""}`,
+      },
+    }).catch((err) => console.error("Activity record error:", err));
+
     return NextResponse.json({
       success: true,
       message: "Personal exam schedule saved successfully",

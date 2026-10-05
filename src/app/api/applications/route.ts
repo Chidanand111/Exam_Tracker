@@ -40,6 +40,9 @@ export async function GET() {
         reminders: {
           orderBy: { scheduledFor: "asc" },
         },
+        activities: {
+          orderBy: { timestamp: "desc" },
+        },
       },
     });
 
@@ -71,6 +74,18 @@ export async function POST(req: Request) {
       rollNumber,
       notes,
     });
+
+    // Record Activity (Requirement 64)
+    await prisma.applicationActivity.create({
+      data: {
+        applicationId: result.application.id,
+        activityType: "APPLICATION_CREATED",
+        title: "Application added",
+        description: registrationNumber
+          ? `Recorded registration number: ${registrationNumber}`
+          : "Marked as applied and added to personal tracker",
+      },
+    }).catch((err) => console.error("Activity log error:", err));
 
     return NextResponse.json({
       success: true,

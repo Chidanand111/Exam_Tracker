@@ -107,6 +107,14 @@ model Recruitment {
   citations             DataCitation[]
   reviewItems           ReviewQueueItem[]
   urlChecks             UrlHealthCheck[]
+
+  @@index([status])
+  @@index([lifecycleStage])
+  @@index([isArchived])
+  @@index([appDeadline])
+  @@index([fresherEligible])
+  @@index([stateLocation])
+  @@index([vacancies])
 }
 
 model RecruitmentPost {
@@ -179,6 +187,7 @@ model UserApplication {
 
   stageProgress      UserStageProgress[]
   reminders          Reminder[]
+  activities         ApplicationActivity[]
 
   @@unique([userId, recruitmentId])
 }
@@ -757,6 +766,54 @@ model OfficialDomain {
   updatedAt         DateTime  @updatedAt
 
   @@index([trustStatus])
+}
+
+// ==========================================
+// 64. Application Activity History
+// Maintains user's personal audit & activity interaction history
+// ==========================================
+model ApplicationActivity {
+  id            String          @id @default(cuid())
+  applicationId String
+  application   UserApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  activityType  String          // "APPLICATION_CREATED", "EXAM_SCHEDULE_ADDED", "ADMIT_CARD_VIEWED", "EXAM_COMPLETED", "RESULT_CHECKED", "NEXT_STAGE_ACTIVATED", "NOTES_UPDATED", "CALENDAR_EXPORTED"
+  title         String          // e.g. "Personal exam date added"
+  description   String?         // e.g. "Scheduled for 14 Nov 2026, Shift 2 at TCS iON Digital Zone"
+  metadata      Json?
+  timestamp     DateTime        @default(now())
+
+  @@index([applicationId, timestamp])
+}
+
+// ==========================================
+// 74. Reliability & Job Idempotency
+// Prevents duplicate background ingestion or redundant notification dispatches
+// ==========================================
+model JobIdempotencyRecord {
+  id             String    @id @default(cuid())
+  idempotencyKey String    @unique // e.g. "source-crawl-ssc-2026-10-05"
+  jobType        String    // "SOURCE_MONITOR", "NOTIFICATION_DISPATCH", "EXTRACTION_PIPELINE"
+  status         String    @default("COMPLETED") // "PROCESSING", "COMPLETED", "FAILED"
+  resultPayload  Json?
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime?
+
+  @@index([idempotencyKey])
+}
+
+// ==========================================
+// 77. Privacy-Conscious Product Analytics
+// Aggregated, anonymized product telemetry with zero intrusive user tracking
+// ==========================================
+model PrivacyAnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventType  String   // "RECRUITMENT_VIEWED", "SEARCH_PERFORMED", "OFFICIAL_APPLY_CLICKED", "CALENDAR_EXPORTED", "TRACKER_CREATED", "BOOKMARK_SAVED"
+  targetSlug String?
+  category   String?  // e.g. "GRADUATE", "ENGINEERING", "BANKING"
+  metadata   Json?    // Anonymous aggregate metrics (no IP, no session cookies, no PII)
+  timestamp  DateTime @default(now())
+
+  @@index([eventType, timestamp])
 }
 
 
