@@ -27,6 +27,7 @@ import { WhyAmIEligibleModal } from "@/components/eligibility/WhyAmIEligibleModa
 import { ShortlistButton } from "@/components/shortlist/ShortlistButton";
 import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
 import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
+import RecruitmentNotesModal from "@/components/notes/RecruitmentNotesModal";
 
 interface RecruitmentCardProps {
   recruitment: RecruitmentItem;
@@ -54,6 +55,7 @@ export function RecruitmentCard({
   const [showWhyEligibleModal, setShowWhyEligibleModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showVaultModal, setShowVaultModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [regNo, setRegNo] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [notes, setNotes] = useState("");
@@ -362,24 +364,36 @@ export function RecruitmentCard({
           )}
         </div>
 
-        {/* Secondary Workflow Buttons: Checklist & Vault */}
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        {/* Secondary Workflow Buttons: Checklist, Vault & Private Notes */}
+        <div className="grid grid-cols-3 gap-1.5 mb-2">
           <button
             type="button"
             onClick={() => setShowChecklistModal(true)}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/25 text-blue-300 text-[11px] font-semibold transition-colors"
+            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/25 text-blue-300 text-[10px] sm:text-[11px] font-semibold transition-colors"
+            title="Application Preparation Checklist"
           >
-            <FileCheck2 className="w-3.5 h-3.5 text-blue-400" />
-            <span>Prep Checklist</span>
+            <FileCheck2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="truncate">Checklist</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowVaultModal(true)}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-300 text-[11px] font-semibold transition-colors"
+            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-300 text-[10px] sm:text-[11px] font-semibold transition-colors"
+            title="Reference & Receipt Vault"
           >
-            <Lock className="w-3.5 h-3.5 text-amber-400" />
-            <span>Receipt Vault</span>
+            <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="truncate">Vault</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowNotesModal(true)}
+            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-[10px] sm:text-[11px] font-semibold transition-colors"
+            title="Private Workspace Notes"
+          >
+            <FileText className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <span className="truncate">Notes</span>
           </button>
         </div>
 
@@ -515,6 +529,14 @@ export function RecruitmentCard({
         recruitmentTitle={recruitment.title}
         organizationName={recruitment.organization?.name}
         officialApplyUrl={recruitment.officialApplyUrl}
+      />
+
+      {/* Recruitment Notes & Private Workspace Modal */}
+      <RecruitmentNotesModal
+        isOpen={showNotesModal}
+        onClose={() => setShowNotesModal(false)}
+        recruitmentId={recruitment.id}
+        recruitmentTitle={recruitment.title}
       />
     </div>
   );

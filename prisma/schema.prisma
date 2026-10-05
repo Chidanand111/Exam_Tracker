@@ -25,6 +25,8 @@ model User {
   savedSearches      SavedSearch[]
   vaultRecords       ApplicationVault[]
   userChecklistItems UserChecklistItem[]
+  notes              RecruitmentNote[]
+  privacySettings    UserPrivacySettings?
 }
 
 model Organization {
@@ -88,6 +90,7 @@ model Recruitment {
   vaultRecords          ApplicationVault[]
   checklistItems        RecruitmentChecklistItem[]
   userChecklistItems    UserChecklistItem[]
+  notes                 RecruitmentNote[]
 }
 
 model RecruitmentPost {
@@ -467,4 +470,62 @@ model ApplicationVault {
   @@index([userId])
 }
 
+// ==========================================
+// 40. Recruitment Notes & Private Workspace
+// Strictly private to the candidate, never exposed to other users
+// ==========================================
+model RecruitmentNote {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recruitmentId String
+  recruitment   Recruitment @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  
+  title         String?     // e.g., "Documentation To-Do", "Syllabus Checklist"
+  content       String      // Plain text notes
+  isPinned      Boolean     @default(false)
+  checklist     Json?       // Embedded checklist: [{ id: string, text: string, isDone: boolean }]
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
+  @@index([userId, recruitmentId])
+  @@index([userId, isPinned])
+}
+
+// ==========================================
+// 42 & 43. Privacy Controls & Data Portability
+// Granular controls where defaults strictly favor privacy
+// ==========================================
+model UserPrivacySettings {
+  id                         String   @id @default(cuid())
+  userId                     String   @unique
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 43. Privacy Controls (Defaults favor privacy)
+  profileVisibility          String   @default("PRIVATE") // "PRIVATE" | "ANONYMOUS_MATCH"
+  storeDocumentsInVault      Boolean  @default(true)
+  allowPersonalizedDiscovery Boolean  @default(true)
+  emailNotifications         Boolean  @default(false) // Default favors privacy
+  inAppNotifications         Boolean  @default(true)
+  smsAlerts                  Boolean  @default(false) // Default favors privacy
+  telegramAlerts             Boolean  @default(false) // Default favors privacy
+  analyticsParticipation     Boolean  @default(false) // Default favors privacy: opt-in only
+  communicationPreference    String   @default("IN_APP_ONLY") // "IN_APP_ONLY" | "EMAIL_DIGEST"
+  
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model AccountDeletionRequest {
+  id              String    @id @default(cuid())
+  userId          String
+  userEmail       String
+  reason          String?
+  status          String    @default("COMPLETED") // "PENDING", "PROCESSING", "COMPLETED"
+  requestedAt     DateTime  @default(now())
+  completedAt     DateTime?
+  purgedEntities  Json?     // Summary of purged tables { applications: 3, notes: 5, vault: 2, profile: true }
+  
+  createdAt       DateTime  @default(now())
+}

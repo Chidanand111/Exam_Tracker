@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2 } from "lucide-react";
+import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2, WifiOff } from "lucide-react";
 import { RecruitmentItem, FilterState, CandidateProfileData } from "@/types";
 import { FilterSidebar } from "@/components/recruitments/FilterSidebar";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
@@ -10,6 +10,8 @@ import { OnboardingModal } from "@/components/profile/OnboardingModal";
 import { evaluateRecruitmentMatch } from "@/lib/profile-matcher";
 import { SavedSearchesBar } from "@/components/discover/SavedSearchesBar";
 import { ComparisonFloatingBar } from "@/components/compare/ComparisonFloatingBar";
+import { fetchWithRetry, saveCachedRecruitments, getCachedRecruitments } from "@/lib/network";
+import { RecruitmentCardSkeleton } from "@/components/ui/Skeleton";
 
 function DiscoverContent() {
   const searchParams = useSearchParams();
@@ -34,6 +36,8 @@ function DiscoverContent() {
 
   const [recruitments, setRecruitments] = useState<RecruitmentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUsingCache, setIsUsingCache] = useState(false);
+  const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
   const [selectedToCompare, setSelectedToCompare] = useState<
     Array<{ id: string; title: string; organizationName?: string }>
   >([]);
@@ -137,11 +141,21 @@ function DiscoverContent() {
       if (filters.status && filters.status !== "ALL") params.set("status", filters.status);
       params.set("sort", filters.sortBy);
 
-      const res = await fetch(`/api/recruitments?${params.toString()}`);
+      const res = await fetchWithRetry(`/api/recruitments?${params.toString()}`, {}, 3, 800);
       const data = await res.json();
-      setRecruitments(data.recruitments || []);
+      const recs = data.recruitments || [];
+      setRecruitments(recs);
+      setIsUsingCache(false);
+      // Cache fresh data for offline use
+      saveCachedRecruitments(recs);
     } catch (err) {
-      console.error(err);
+      console.warn("Network fetch failed, attempting to read from offline cache:", err);
+      const cached = getCachedRecruitments<RecruitmentItem[]>();
+      if (cached && cached.data) {
+        setRecruitments(cached.data);
+        setIsUsingCache(true);
+        setCacheTimestamp(cached.formattedTime);
+      }
     } finally {
       setLoading(false);
     }
@@ -304,6 +318,22 @@ function DiscoverContent() {
 
         {/* Results Area */}
         <div className="flex-1 space-y-4">
+          {/* Offline Cache Indicator Alert Banner */}
+          {isUsingCache && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="p-3.5 bg-amber-950/40 border border-amber-600/40 rounded-xl flex items-center justify-between text-xs text-amber-200"
+            >
+              <div className="flex items-center gap-2">
+                <WifiOff className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  <strong>Offline Cache Active:</strong> Displaying cached recruitment opportunities saved on {cacheTimestamp}. Live vacancy updates and official notifications will refresh once internet is restored.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Active summary bar */}
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>
@@ -320,7 +350,7 @@ function DiscoverContent() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-64 rounded-2xl bg-slate-900/60 animate-pulse border border-slate-800" />
+                <RecruitmentCardSkeleton key={i} />
               ))}
             </div>
           ) : displayedRecruitments.length === 0 ? (

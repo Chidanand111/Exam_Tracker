@@ -86,3 +86,52 @@ body {
   color: #cbd5e1;
   border: 1px solid rgba(148, 163, 184, 0.25);
 }
+
+/* ==========================================================
+   44. Accessibility System: Focus, Reduced Motion & Touch
+   ========================================================== */
+
+/* High-Contrast Visible Focus Rings for Keyboard Navigation */
+:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Skip to Main Content link (accessible navigation) */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-to-content:focus {
+  top: 1rem;
+}
+
+/* Minimum touch target size (44x44px per WCAG 2.5.5) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Reduced Motion Mode */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

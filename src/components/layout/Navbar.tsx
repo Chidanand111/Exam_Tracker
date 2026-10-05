@@ -9,6 +9,7 @@ import {
   BookmarkCheck,
   Bell,
   ShieldCheck,
+  Shield,
   LogIn,
   LogOut,
   User,
@@ -329,6 +330,15 @@ export function Navbar() {
                     >
                       <User className="w-4 h-4 text-purple-400" />
                       <span>Candidate Profile & Preferences</span>
+                    </Link>
+
+                    <Link
+                      href="/privacy-center"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800"
+                    >
+                      <Shield className="w-4 h-4 text-emerald-400" />
+                      <span>Privacy Center & Data Export</span>
                     </Link>
 
                     {/* Quick Demo Switchers */}
