@@ -36,6 +36,7 @@ import { ShortlistButton } from "@/components/shortlist/ShortlistButton";
 import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
 import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
 import RecruitmentNotesModal from "@/components/notes/RecruitmentNotesModal";
+import { RecruitmentSyllabusView } from "@/components/recruitments/RecruitmentSyllabusView";
 
 export default function RecruitmentDetailPage() {
   const params = useParams();
@@ -478,50 +479,8 @@ export default function RecruitmentDetailPage() {
             )}
           </div>
 
-          {/* Exam Pattern & Syllabus */}
-          <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <FileText className="w-4 h-4 text-blue-400" />
-              <span>Exam Pattern & Selection Scheme</span>
-            </h3>
-
-            {recruitment.selectionProcessSummary && (
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
-                <span className="font-semibold text-slate-300 block mb-1">Selection Scheme:</span>
-                <p className="text-slate-400 leading-relaxed">{recruitment.selectionProcessSummary}</p>
-              </div>
-            )}
-
-            {examPattern.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
-                      <th className="py-2.5 px-3">Section / Subject</th>
-                      <th className="py-2.5 px-3">Questions</th>
-                      <th className="py-2.5 px-3">Maximum Marks</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {examPattern.map((p: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-800/30">
-                        <td className="py-2.5 px-3 font-medium text-white">{p.section}</td>
-                        <td className="py-2.5 px-3 text-slate-300">{p.questions}</td>
-                        <td className="py-2.5 px-3 text-emerald-400 font-bold">{p.marks}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {recruitment.syllabusSummary && (
-              <div className="pt-2 text-xs text-slate-400 leading-relaxed">
-                <span className="font-semibold text-slate-300 block mb-1">Syllabus Overview:</span>
-                <p>{recruitment.syllabusSummary}</p>
-              </div>
-            )}
-          </div>
+          {/* Exam Pattern & Detailed Syllabus */}
+          <RecruitmentSyllabusView recruitment={recruitment} />
         </div>
 
         {/* Right Column (1 col): Key Parameters & Dates */}

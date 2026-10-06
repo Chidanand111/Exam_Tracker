@@ -45,10 +45,12 @@ import { evaluateEligibilityCompatibility } from "@/lib/eligibility-engine";
 import { NotificationPdfViewerModal } from "@/components/notifications/NotificationPdfViewerModal";
 import { CitationBadge } from "./CitationBadge";
 import { RecruitmentShareModal } from "@/components/sharing/RecruitmentShareModal";
+import { RecruitmentSyllabusView } from "./RecruitmentSyllabusView";
+import { RecruitmentSelectionProcessView } from "./RecruitmentSelectionProcessView";
 
 interface Props {
   recruitment: any;
-  activeSubTab?: "overview" | "eligibility" | "selection-process" | "important-dates";
+  activeSubTab?: "overview" | "eligibility" | "selection-process" | "syllabus" | "important-dates";
 }
 
 export function RecruitmentDeepLinkView({
@@ -434,6 +436,21 @@ export function RecruitmentDeepLinkView({
             </Link>
 
             <Link
+              href={`/recruitments/${baseSlug}/syllabus`}
+              className={`py-3 border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                currentTab === "syllabus"
+                  ? "border-blue-500 text-blue-400 font-semibold"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => setCurrentTab("syllabus")}
+            >
+              <span>Syllabus & Exam Pattern</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono">
+                Detailed
+              </span>
+            </Link>
+
+            <Link
               href={`/recruitments/${baseSlug}/important-dates`}
               className={`py-3 border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                 currentTab === "important-dates"
@@ -611,51 +628,15 @@ export function RecruitmentDeepLinkView({
 
         {/* Tab 3: Selection Process & Stages */}
         {currentTab === "selection-process" && (
-          <div className="space-y-6">
-            <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4">
-              <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-purple-400" />
-                Sequential Examination Stages & Pattern
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                {recruitment.selectionProcessSummary || "Screening Computer Based Examination followed by Merit Stage and Document Verification."}
-              </p>
-
-              {recruitment.stages && recruitment.stages.length > 0 ? (
-                <div className="pt-4 space-y-4">
-                  {recruitment.stages.map((stage: any, index: number) => (
-                    <div
-                      key={stage.id}
-                      className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-semibold text-blue-400 uppercase">
-                          Stage {stage.stageOrder}: {stage.stageName}
-                        </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
-                          {stage.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {stage.description || "Detailed stage instructions available in official notification."}
-                      </p>
-                      {stage.schedules && stage.schedules.length > 0 && (
-                        <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-900 flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                          <span>{stage.schedules.length} Exam Shifts Scheduled</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 py-4">Stage details to be announced.</p>
-              )}
-            </div>
-          </div>
+          <RecruitmentSelectionProcessView recruitment={recruitment} />
         )}
 
-        {/* Tab 4: Important Dates & Shift Blueprint */}
+        {/* Tab 4: Syllabus & Exam Pattern */}
+        {currentTab === "syllabus" && (
+          <RecruitmentSyllabusView recruitment={recruitment} />
+        )}
+
+        {/* Tab 5: Important Dates & Shift Blueprint */}
         {currentTab === "important-dates" && (
           <div className="space-y-6">
             <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4">
