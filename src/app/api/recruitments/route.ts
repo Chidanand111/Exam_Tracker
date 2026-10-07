@@ -180,3 +180,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error?.message || "Failed to load recruitments" }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  const { POST: adminCreateRecruitment } = await import("@/app/api/admin/recruitments/route");
+  return adminCreateRecruitment(req);
+}
+

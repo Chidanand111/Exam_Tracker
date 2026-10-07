@@ -193,17 +193,19 @@ export function Navbar() {
               <span>Candidate Profile</span>
             </Link>
 
-            <Link
-              href="/admin"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname.startsWith("/admin")
-                  ? "bg-amber-600/15 text-amber-400 border border-amber-500/30"
-                  : "text-slate-400 hover:text-amber-300 hover:bg-slate-800/60"
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>Admin & Crawler</span>
-            </Link>
+            {user?.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname.startsWith("/admin")
+                    ? "bg-amber-600/15 text-amber-400 border border-amber-500/30"
+                    : "text-slate-400 hover:text-amber-300 hover:bg-slate-800/60"
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span>Admin Console</span>
+              </Link>
+            )}
           </nav>
 
           {/* Right Action Icons & Auth Profile */}
@@ -340,6 +342,17 @@ export function Navbar() {
                       <Shield className="w-4 h-4 text-emerald-400" />
                       <span>Privacy Center & Data Export</span>
                     </Link>
+
+                    {user.role === "ADMIN" && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-slate-800"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-amber-400" />
+                        <span>Admin Console & Exam Publisher</span>
+                      </Link>
+                    )}
 
                     {/* Quick Demo Switchers */}
                     <div className="pt-2 border-t border-slate-800">

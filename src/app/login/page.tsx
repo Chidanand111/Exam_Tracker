@@ -15,7 +15,11 @@ function LoginForm() {
   const [name, setName] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    searchParams.get("error") === "admin_required"
+      ? "Administrator privileges required. Please sign in with an authorized Officer account."
+      : ""
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

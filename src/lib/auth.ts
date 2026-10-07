@@ -36,3 +36,25 @@ export async function getCurrentUser(): Promise<UserSession | null> {
     return null;
   }
 }
+
+/**
+ * Strict role enforcement helper. Throws specific errors if not authenticated or not an admin.
+ */
+export async function requireAdmin(): Promise<UserSession> {
+  const user = await getCurrentUser();
+  if (!user) {
+    const error: any = new Error("Authentication required");
+    error.status = 401;
+    throw error;
+  }
+  if (user.role !== "ADMIN") {
+    const error: any = new Error("Access denied: Administrator privileges required");
+    error.status = 403;
+    throw error;
+  }
+  return user;
+}
+
+export function isAdmin(user: UserSession | null): boolean {
+  return !!user && user.role === "ADMIN";
+}

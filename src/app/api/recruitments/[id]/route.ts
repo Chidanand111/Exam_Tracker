@@ -33,3 +33,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: "Failed to fetch recruitment details" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const { DELETE: adminDelete } = await import("@/app/api/admin/recruitments/[id]/route");
+  return adminDelete(req, { params });
+}
+
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const { PATCH: adminPatch } = await import("@/app/api/admin/recruitments/[id]/route");
+  return adminPatch(req, { params });
+}
+

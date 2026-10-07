@@ -28,11 +28,16 @@ import { ReviewQueueTab } from "@/components/admin/ReviewQueueTab";
 import { AuditLogsTab } from "@/components/admin/AuditLogsTab";
 import { UrlHealthTab } from "@/components/admin/UrlHealthTab";
 import { DomainRegistryTab } from "@/components/admin/DomainRegistryTab";
+import { CreateExamTab } from "@/components/admin/CreateExamTab";
 
 export default function AdminDashboardPage() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAuthorizedAdmin, setIsAuthorizedAdmin] = useState(false);
+
   const [activeTab, setActiveTab] = useState<
-    "sources" | "duplicates" | "conflicts" | "extractor" | "corrigendum" | "reviewQueue" | "auditLogs" | "urlHealth" | "domains"
-  >("sources");
+    "createExam" | "sources" | "duplicates" | "conflicts" | "extractor" | "corrigendum" | "reviewQueue" | "auditLogs" | "urlHealth" | "domains"
+  >("createExam");
   const [sources, setSources] = useState<any[]>([]);
   const [changes, setChanges] = useState<any[]>([]);
   const [duplicates, setDuplicates] = useState<any[]>([]);
@@ -64,10 +69,37 @@ export default function AdminDashboardPage() {
   const [deepScanResult, setDeepScanResult] = useState<any>(null);
 
   useEffect(() => {
-    fetchAdminData();
-    fetchDuplicates();
-    fetchConflicts();
+    checkAdminAuth();
   }, []);
+
+  const checkAdminAuth = async () => {
+    setCheckingAuth(true);
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user && data.user.role === "ADMIN") {
+          setCurrentUser(data.user);
+          setIsAuthorizedAdmin(true);
+          fetchAdminData();
+          fetchDuplicates();
+          fetchConflicts();
+          return;
+        } else {
+          setCurrentUser(data.user || null);
+          setIsAuthorizedAdmin(false);
+        }
+      } else {
+        setCurrentUser(null);
+        setIsAuthorizedAdmin(false);
+      }
+    } catch (err) {
+      console.error("Admin auth check error:", err);
+      setIsAuthorizedAdmin(false);
+    } finally {
+      setCheckingAuth(false);
+    }
+  };
 
   const fetchAdminData = async () => {
     setLoading(true);
@@ -255,6 +287,75 @@ export default function AdminDashboardPage() {
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex items-center gap-3">
+          <ShieldCheck className="w-6 h-6 text-blue-400 animate-pulse" />
+          <span className="text-sm font-bold text-white">Verifying Administrator Privileges & RBAC Access...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorizedAdmin) {
+    return (
+      <div className="max-w-xl mx-auto my-16 p-8 rounded-3xl glass-panel bg-slate-900/90 border border-rose-500/30 text-center space-y-6 shadow-2xl">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/20">
+          <Lock className="w-8 h-8" />
+        </div>
+
+        <div className="space-y-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            Strict Access Control Enforcement
+          </span>
+          <h1 className="text-2xl font-black text-white tracking-tight">
+            Administrator Privileges Required
+          </h1>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+            The Admin Command Center & Exam Publisher is strictly restricted to verified commission officers and administrators. Your current session does not possess the <code className="text-rose-300 bg-rose-950/60 px-1 py-0.5 rounded">ADMIN</code> role.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-left text-xs space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Current Session:</span>
+            <span className="font-semibold text-white">
+              {currentUser ? currentUser.email : "Not Authenticated"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Active Role:</span>
+            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
+              currentUser?.role === "ADMIN" ? "bg-amber-500/20 text-amber-400" : "bg-blue-500/20 text-blue-400"
+            }`}>
+              {currentUser ? currentUser.role : "ANONYMOUS"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Required Role:</span>
+            <span className="font-bold text-rose-400">ADMIN</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <a
+            href="/login?returnUrl=/admin"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors shadow-md shadow-blue-600/30"
+          >
+            Sign In as Administrator
+          </a>
+          <a
+            href="/discover"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs transition-colors"
+          >
+            Return to Public Discovery
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
@@ -269,6 +370,12 @@ export default function AdminDashboardPage() {
           <p className="text-xs text-slate-400 mt-1">
             Monitor official government portals, review AI-extracted documents, approve stages, and broadcast corrigendums
           </p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>Strict ADMIN Role Verified: {currentUser?.email}</span>
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -345,6 +452,18 @@ export default function AdminDashboardPage() {
 
       {/* Admin Tab Navigation */}
       <div className="flex space-x-2 border-b border-slate-800 pb-3 overflow-x-auto text-xs font-semibold">
+        <button
+          onClick={() => setActiveTab("createExam")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "createExam"
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Plus className="w-3.5 h-3.5 text-blue-300" />
+          <span>Publish New Exam</span>
+        </button>
+
         <button
           onClick={() => setActiveTab("sources")}
           className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
@@ -463,6 +582,9 @@ export default function AdminDashboardPage() {
           <span>Domain Registry</span>
         </button>
       </div>
+
+      {/* Publish New Exam Tab Panel */}
+      {activeTab === "createExam" && <CreateExamTab onExamCreated={fetchAdminData} />}
 
       {/* Duplicate Detection Engine Tab Panel */}
       {activeTab === "duplicates" && (
