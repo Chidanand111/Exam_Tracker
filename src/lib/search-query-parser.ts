@@ -128,7 +128,20 @@ export function parseNaturalLanguageQuery(query: string): ParsedSearchQuery {
     }
   }
 
-  // 4. Detect Category (Banking, Central, Railway, Defense)
+  // 3b. Detect KEA / KPSC and Karnataka State Exam keywords
+  if (/\b(kea|karnataka\s+examination\s+authority|kpsc|vao|grama\s+prashasaka|fda|sda)\b/i.test(workingQuery)) {
+    if (!params.location) {
+      filters.push({
+        key: "location",
+        label: "Location",
+        value: "Karnataka",
+        displayValue: "Karnataka (KEA / KPSC)",
+      });
+      params.location = "Karnataka";
+    }
+  }
+
+  // 4. Detect Category (Banking, Central, Railway, Defense, State PSC / Boards)
   if (/\b(bank|banking|ibps|sbi|rbi)\b/i.test(workingQuery)) {
     filters.push({
       key: "category",
@@ -156,6 +169,15 @@ export function parseNaturalLanguageQuery(query: string): ParsedSearchQuery {
     });
     params.category = "RAILWAY";
     workingQuery = workingQuery.replace(/\b(railway|railways|rrb)\b/gi, "");
+  } else if (/\b(kea|kpsc|state\s+psc|state\s+commission|state\s+boards?)\b/i.test(workingQuery)) {
+    filters.push({
+      key: "category",
+      label: "Sector",
+      value: "STATE_PSC",
+      displayValue: "State PSC & Boards (KEA / KPSC)",
+    });
+    params.category = "STATE_PSC";
+    workingQuery = workingQuery.replace(/\b(state\s+psc|state\s+commission|state\s+boards?|karnataka\s+examination\s+authority)\b/gi, "");
   }
 
   // 5. Detect Closing Soon / Deadlines

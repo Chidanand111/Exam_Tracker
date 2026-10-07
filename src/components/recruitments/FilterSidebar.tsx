@@ -26,7 +26,7 @@ const QUALIFICATIONS = [
 const SECTORS = [
   { id: "ALL", label: "All Sectors & Boards" },
   { id: "CENTRAL", label: "Central Ministries (SSC/UPSC/IB)" },
-  { id: "STATE_PSC", label: "🏛️ State PSCs (UP, Bihar, MH, KA...)" },
+  { id: "STATE_PSC", label: "🏛️ State PSCs & Boards (KEA, KPSC, UPPSC...)" },
   { id: "BANKING", label: "Banking & Finance (IBPS/SBI)" },
   { id: "REGULATORY", label: "Apex Regulatory (RBI/SEBI/NABARD)" },
   { id: "RAILWAY", label: "Indian Railways (RRB)" },
@@ -40,7 +40,7 @@ const STATES = [
   { id: "Uttar Pradesh", label: "Uttar Pradesh (UPPSC)" },
   { id: "Bihar", label: "Bihar (BPSC)" },
   { id: "Maharashtra", label: "Maharashtra (MPSC)" },
-  { id: "Karnataka", label: "Karnataka (KPSC)" },
+  { id: "Karnataka", label: "Karnataka (KEA / KPSC)" },
   { id: "Tamil Nadu", label: "Tamil Nadu (TNPSC)" },
   { id: "Telangana", label: "Telangana (TGPSC)" },
   { id: "Rajasthan", label: "Rajasthan (RPSC)" },

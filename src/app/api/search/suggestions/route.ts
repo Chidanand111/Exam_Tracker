@@ -135,7 +135,14 @@ export async function GET(req: Request) {
     });
 
     // State location suggestion if matches
-    if (qLower.includes("karnataka") || qLower.includes("delhi") || qLower.includes("maharashtra")) {
+    if (qLower.includes("kea") || qLower.includes("karnataka")) {
+      suggestions.push({
+        type: "location",
+        label: "Karnataka State Recruitments (KEA / KPSC)",
+        value: "Karnataka",
+        category: "Location",
+      });
+    } else if (qLower.includes("delhi") || qLower.includes("maharashtra")) {
       const stateCapitalized = query.charAt(0).toUpperCase() + query.slice(1);
       suggestions.push({
         type: "location",
