@@ -29,6 +29,7 @@ import { AuditLogsTab } from "@/components/admin/AuditLogsTab";
 import { UrlHealthTab } from "@/components/admin/UrlHealthTab";
 import { DomainRegistryTab } from "@/components/admin/DomainRegistryTab";
 import { CreateExamTab } from "@/components/admin/CreateExamTab";
+import { AutoFetchTab } from "@/components/admin/AutoFetchTab";
 
 export default function AdminDashboardPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -36,7 +37,7 @@ export default function AdminDashboardPage() {
   const [isAuthorizedAdmin, setIsAuthorizedAdmin] = useState(false);
 
   const [activeTab, setActiveTab] = useState<
-    "createExam" | "sources" | "duplicates" | "conflicts" | "extractor" | "corrigendum" | "reviewQueue" | "auditLogs" | "urlHealth" | "domains"
+    "createExam" | "sources" | "autoFetch" | "duplicates" | "conflicts" | "extractor" | "corrigendum" | "reviewQueue" | "auditLogs" | "urlHealth" | "domains"
   >("createExam");
   const [sources, setSources] = useState<any[]>([]);
   const [changes, setChanges] = useState<any[]>([]);
@@ -396,6 +397,14 @@ export default function AdminDashboardPage() {
             <RefreshCw className={`w-4 h-4 ${crawling ? "animate-spin" : ""}`} />
             <span>{crawling ? "Polling Portals..." : "Run Source Audit Now"}</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab("autoFetch")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white text-xs font-bold transition-all"
+          >
+            <Clock className="w-4 h-4 text-emerald-400" />
+            <span>⏰ Auto-Fetch (2x Daily)</span>
+          </button>
         </div>
       </div>
 
@@ -474,6 +483,18 @@ export default function AdminDashboardPage() {
         >
           <Database className="w-3.5 h-3.5" />
           <span>Official Sources & Registry</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("autoFetch")}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
+            activeTab === "autoFetch"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5 text-blue-300" />
+          <span>Auto-Fetch Engine (Twice Daily)</span>
         </button>
 
         <button
@@ -585,6 +606,9 @@ export default function AdminDashboardPage() {
 
       {/* Publish New Exam Tab Panel */}
       {activeTab === "createExam" && <CreateExamTab onExamCreated={fetchAdminData} />}
+
+      {/* Auto-Fetch Engine Tab Panel (Twice Daily) */}
+      {activeTab === "autoFetch" && <AutoFetchTab onRefreshAll={fetchAdminData} />}
 
       {/* Duplicate Detection Engine Tab Panel */}
       {activeTab === "duplicates" && (

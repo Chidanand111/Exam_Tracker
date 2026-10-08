@@ -845,5 +845,28 @@ model CareerBulletin {
   @@index([publishedAt])
 }
 
+// ==========================================
+// 80. Automated Feed & Portal Synchronization Log
+// Records twice-daily scheduled cron crawls and on-demand admin ingestions
+// ==========================================
+model AutoFetchLog {
+  id              String    @id @default(cuid())
+  source          String    @default("ALL") // "ALL", "GOV_PORTALS", "CAREER_FEED", "KEA"
+  triggerType     String    @default("SCHEDULED_CRON") // "SCHEDULED_CRON", "ADMIN_MANUAL", "SYSTEM_WORKER"
+  status          String    @default("SUCCESS") // "SUCCESS", "PARTIAL", "FAILED", "RUNNING"
+  itemsFound      Int       @default(0)
+  newRecruitments Int       @default(0)
+  newBulletins    Int       @default(0)
+  updatedCount    Int       @default(0)
+  durationMs      Int       @default(0)
+  summaryMessage  String?
+  errorsJson      String?   // JSON string of any caught warnings/errors
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([startedAt])
+  @@index([status])
+}
+
 
 

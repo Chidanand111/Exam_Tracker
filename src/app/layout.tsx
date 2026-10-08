@@ -5,6 +5,11 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 import OfflineBanner from "@/components/network/OfflineBanner";
+import { initCronWorkerFallback } from "@/lib/cron-scheduler";
+
+if (typeof window === "undefined" && process.env.NODE_ENV !== "test") {
+  initCronWorkerFallback();
+}
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
