@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2, WifiOff, Archive } from "lucide-react";
+import { Search, Compass, AlertCircle, Sparkles, User, Settings2, CheckCircle2, WifiOff, Archive, BookOpen, ArrowRight } from "lucide-react";
 import { RecruitmentItem, FilterState, CandidateProfileData } from "@/types";
 import { FilterSidebar } from "@/components/recruitments/FilterSidebar";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
@@ -271,6 +272,37 @@ function DiscoverContent() {
             onSelectSuggestion={handleSelectSuggestion}
           />
         </div>
+      </div>
+
+      {/* Career Advisories & Educational Bulletins Spotlight Banner */}
+      <div className="p-3.5 sm:p-4 rounded-2xl glass-panel bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-slate-900 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shrink-0">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-white">Career Advisories & Educational Bulletins:</span>
+              <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                🎓 Scholarships up to ₹60,000
+              </span>
+              <span className="text-[10px] font-semibold text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                📢 KEA & Exam Day Advisories
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Access verified student scholarships, bus pass concessions, free competitive exam coaching, and mandatory hall ticket dress code rules.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/bulletins"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-all shrink-0 self-start sm:self-auto"
+        >
+          <span>Explore Bulletins</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Interpreted Natural Language Query Badges (Requirement 69) */}

@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Star,
   Scale,
+  BookOpen,
 } from "lucide-react";
 import { UserSession } from "@/types";
 
@@ -143,6 +144,18 @@ export function Navbar() {
             >
               <GraduationCap className="w-4 h-4 text-emerald-400" />
               <span>Graduate Freshers</span>
+            </Link>
+
+            <Link
+              href="/bulletins"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname.startsWith("/bulletins")
+                  ? "bg-cyan-600/15 text-cyan-400 border border-cyan-500/30"
+                  : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800/60"
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>Career Bulletins</span>
             </Link>
 
             <Link
@@ -332,6 +345,15 @@ export function Navbar() {
                     >
                       <User className="w-4 h-4 text-purple-400" />
                       <span>Candidate Profile & Preferences</span>
+                    </Link>
+
+                    <Link
+                      href="/bulletins"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800"
+                    >
+                      <BookOpen className="w-4 h-4 text-cyan-400" />
+                      <span>Career & Educational Bulletins</span>
                     </Link>
 
                     <Link

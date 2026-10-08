@@ -16,6 +16,7 @@ import {
   BellRing,
   Clock,
   Layers,
+  BookOpen,
 } from "lucide-react";
 import { RecruitmentItem } from "@/types";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
@@ -53,6 +54,7 @@ export default function HomePage() {
 
   const quickPills = [
     { label: "Graduate Freshers", query: "fresher=true" },
+    { label: "🎓 Career & Edu Bulletins", href: "/bulletins" },
     { label: "SSC Exams", query: "search=SSC" },
     { label: "Banking (IBPS/SBI)", query: "category=BANKING" },
     { label: "B.Tech Govt Jobs", query: "qualification=BTECH" },
@@ -124,7 +126,7 @@ export default function HomePage() {
               {quickPills.map((pill, i) => (
                 <Link
                   key={i}
-                  href={`/discover?${pill.query}`}
+                  href={pill.href || `/discover?${pill.query}`}
                   className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 text-slate-300 hover:text-white transition-colors"
                 >
                   {pill.label}
@@ -262,6 +264,124 @@ export default function HomePage() {
               <p className="text-xs text-slate-400 leading-relaxed">
                 When results are released, mark yourself <strong>"Selected for Next Stage"</strong> to unlock Round 2 (Tier 2 / Mains / Skill Test). Future stages stay locked until qualified.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Career Advisories & Educational Bulletins Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <BookOpen className="w-4 h-4" />
+              </span>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                Career Advisories & Educational Bulletins
+              </h2>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Verified state & central student scholarships, free coaching schemes, bus pass concessions, and exam guidelines
+            </p>
+          </div>
+          <Link
+            href="/bulletins"
+            className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 shrink-0"
+          >
+            <span>Explore all bulletins</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="rounded-2xl glass-panel bg-gradient-to-br from-slate-900 via-slate-900/80 to-[#0c182b] border border-cyan-500/20 p-5 flex flex-col justify-between hover:border-cyan-500/40 transition-all shadow-lg group">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  🎓 Scholarship & Grant
+                </span>
+                <span className="text-[11px] text-amber-400 font-medium">Due 31 Oct 2026</span>
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors mb-2">
+                Aditya Birla Capital Scholarship Program 2026-27
+              </h3>
+              <div className="inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 text-xs font-semibold mb-3">
+                Grant: Up to ₹60,000 / year
+              </div>
+              <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                Financial support for meritorious female students in Class 9-12, Polytechnic, Undergraduate (UG), and Postgraduate (PG) courses across India.
+              </p>
+            </div>
+            <div className="pt-4 mt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">Buddy4Study / ABCF</span>
+              <Link
+                href="/bulletins/aditya-birla-capital-scholarship-2026-27"
+                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              >
+                <span>Read & Apply</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-2xl glass-panel bg-gradient-to-br from-slate-900 via-slate-900/80 to-[#0c182b] border border-cyan-500/20 p-5 flex flex-col justify-between hover:border-cyan-500/40 transition-all shadow-lg group">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  🎓 School Scholarship
+                </span>
+                <span className="text-[11px] text-amber-400 font-medium">Due 30 Oct 2026</span>
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors mb-2">
+                Valvoline Cummins Muskaan Scholarship Program 2.0
+              </h3>
+              <div className="inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 text-xs font-semibold mb-3">
+                Grant: ₹12,000 Annual Assistance
+              </div>
+              <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                Direct financial grant for 9th to 12th standard students. Affirmative priority given to children of commercial vehicle drivers, mechanics, and daily wage earners.
+              </p>
+            </div>
+            <div className="pt-4 mt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">VCPL CSR Foundation</span>
+              <Link
+                href="/bulletins/muskaan-scholarship-program-2026-27"
+                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              >
+                <span>Read & Apply</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-2xl glass-panel bg-gradient-to-br from-slate-900 via-slate-900/80 to-[#0c182b] border border-cyan-500/20 p-5 flex flex-col justify-between hover:border-cyan-500/40 transition-all shadow-lg group">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  💼 Free Coaching
+                </span>
+                <span className="text-[11px] text-emerald-400 font-medium">₹10,000/mo Stipend</span>
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors mb-2">
+                Karnataka Free Residential Competitive Exam Coaching
+              </h3>
+              <div className="inline-block px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 text-xs font-semibold mb-3">
+                100% Free Coaching + Hostel
+              </div>
+              <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                Government of Karnataka provides free residential coaching for UPSC, KPSC (KAS), Banking, and SSC examinations with living stipend via entrance exam.
+              </p>
+            </div>
+            <div className="pt-4 mt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">Social Welfare & BCWD</span>
+              <Link
+                href="/bulletins/karnataka-free-residential-coaching-upsc-kas-banking-ssc"
+                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              >
+                <span>Read & Apply</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </div>

@@ -85,7 +85,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ];
     });
 
-    return [...staticRoutes, ...recruitmentRoutes];
+    // Dynamic Career Bulletins URLs
+    const bulletins = await prisma.careerBulletin.findMany({
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    });
+
+    const bulletinRoutes: MetadataRoute.Sitemap = [
+      {
+        url: `${baseUrl}/bulletins`,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 0.9,
+      },
+      ...bulletins.map((b) => ({
+        url: `${baseUrl}/bulletins/${b.slug}`,
+        lastModified: b.updatedAt ? new Date(b.updatedAt) : new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.8,
+      })),
+    ];
+
+    return [...staticRoutes, ...recruitmentRoutes, ...bulletinRoutes];
   } catch (error) {
     console.warn("Failed to generate dynamic sitemap entries, returning static routes:", error);
     return staticRoutes;
