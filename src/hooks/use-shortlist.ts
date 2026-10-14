@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ShortlistLifecycleState } from "@/types";
+import { apiClient, ApiClientError } from "@/lib/api-client";
 
 export interface ShortlistItem {
   id: string;
@@ -25,21 +26,31 @@ export function useShortlist(activeTab: string = "ALL") {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const fetchShortlist = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
     setError(null);
+
     try {
-      const url = activeTab === "ALL" ? "/api/shortlist" : `/api/shortlist?state=${activeTab}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await apiClient.shortlist.getAll(activeTab, {
+        signal: controller.signal,
+      });
+      if (data.success) {
         setItems(data.items || []);
         if (data.counts) setCounts(data.counts);
-      } else {
-        setError(data.error || "Failed to load shortlist");
       }
     } catch (err: any) {
-      setError(err?.message || "Network error loading shortlist");
+      if (err.name === "AbortError" || (err instanceof ApiClientError && err.code === "TIMEOUT")) {
+        return;
+      }
+      setError(err?.message || "Failed to load shortlist");
     } finally {
       setLoading(false);
     }
@@ -47,40 +58,55 @@ export function useShortlist(activeTab: string = "ALL") {
 
   useEffect(() => {
     fetchShortlist();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchShortlist]);
 
   const removeItem = useCallback(
     async (recruitmentId: string) => {
+      // Optimistic UI update: Remove immediately from local state
+      const previousItems = [...items];
+      setItems((prev) => prev.filter((i) => i.recruitmentId !== recruitmentId));
+
       try {
-        await fetch(`/api/shortlist?recruitmentId=${recruitmentId}`, {
-          method: "DELETE",
-        });
-        setItems((prev) => prev.filter((i) => i.recruitmentId !== recruitmentId));
+        await apiClient.shortlist.remove(recruitmentId);
+        // Refresh counts in background
         fetchShortlist();
-      } catch (err) {
-        console.error("Failed to remove shortlist item", err);
+      } catch (err: any) {
+        // Rollback on failure
+        setItems(previousItems);
+        setError(err?.message || "Failed to remove item. Restoring...");
       }
     },
-    [fetchShortlist]
+    [items, fetchShortlist]
   );
 
   const updateState = useCallback(
     async (recruitmentId: string, newState: ShortlistLifecycleState) => {
+      // Optimistic UI update
+      const previousItems = [...items];
+      setItems((prev) =>
+        prev.map((i) =>
+          i.recruitmentId === recruitmentId ? { ...i, lifecycleState: newState } : i
+        )
+      );
+
       try {
-        await fetch("/api/shortlist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recruitmentId,
-            lifecycleState: newState,
-          }),
+        await apiClient.shortlist.save({
+          recruitmentId,
+          lifecycleState: newState,
         });
         fetchShortlist();
-      } catch (err) {
-        console.error("Failed to update shortlist state", err);
+      } catch (err: any) {
+        // Rollback on failure
+        setItems(previousItems);
+        setError(err?.message || "Failed to update status. Restoring...");
       }
     },
-    [fetchShortlist]
+    [items, fetchShortlist]
   );
 
   return {

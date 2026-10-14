@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { RecruitmentItem, FilterState } from "@/types";
+import { apiClient, ApiClientError } from "@/lib/api-client";
 
 export interface UseRecruitmentsOptions {
   initialFilters?: Partial<FilterState>;
@@ -12,42 +13,33 @@ export function useRecruitments(options: UseRecruitmentsOptions = {}) {
   const [loading, setLoading] = useState(autoFetch);
   const [error, setError] = useState<string | null>(null);
 
+  // AbortController ref to cancel stale requests on filter changes
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const fetchRecruitments = useCallback(
     async (overrideFilters?: Partial<FilterState>) => {
+      // Cancel previous in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       setLoading(true);
       setError(null);
+
       try {
         const activeFilters = { ...initialFilters, ...overrideFilters };
-        const params = new URLSearchParams();
-
-        if (activeFilters.search) params.set("search", activeFilters.search);
-        if (activeFilters.qualification && activeFilters.qualification !== "ALL") {
-          params.set("qualification", activeFilters.qualification);
-        }
-        if (activeFilters.fresherOnly) params.set("fresher", "true");
-        if (activeFilters.experienceRequired) params.set("experience", "true");
-        if (activeFilters.ageMax) params.set("ageMax", String(activeFilters.ageMax));
-        if (activeFilters.salaryMin) params.set("salaryMin", String(activeFilters.salaryMin));
-        if (activeFilters.category && activeFilters.category !== "ALL") {
-          params.set("category", activeFilters.category);
-        }
-        if (activeFilters.stateLocation && activeFilters.stateLocation !== "ALL") {
-          params.set("stateLocation", activeFilters.stateLocation);
-        }
-        if (activeFilters.status && activeFilters.status !== "ALL") {
-          params.set("status", activeFilters.status);
-        }
-        if (activeFilters.sortBy) params.set("sort", activeFilters.sortBy);
-
-        const res = await fetch(`/api/recruitments?${params.toString()}`);
-        const data = await res.json();
-        if (res.ok) {
-          setRecruitments(data.recruitments || []);
-        } else {
-          setError(data.error || "Failed to load recruitments");
-        }
+        const response = await apiClient.recruitments.getAll(activeFilters, {
+          signal: controller.signal,
+        });
+        setRecruitments(response.recruitments || []);
       } catch (err: any) {
-        setError(err?.message || "Network error loading recruitments");
+        // If aborted, ignore
+        if (err.name === "AbortError" || (err instanceof ApiClientError && err.code === "TIMEOUT")) {
+          return;
+        }
+        setError(err.message || "Failed to load recruitments");
       } finally {
         setLoading(false);
       }
@@ -59,6 +51,11 @@ export function useRecruitments(options: UseRecruitmentsOptions = {}) {
     if (autoFetch) {
       fetchRecruitments();
     }
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchRecruitments, autoFetch]);
 
   return {

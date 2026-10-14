@@ -1,5 +1,7 @@
 import { ShortlistRepository } from "../repositories/shortlist.repository";
 import { ShortlistLifecycleState } from "@/types";
+import { ValidationError } from "../utils/api-handler";
+import { validateSaveShortlistInput } from "@/validators/shortlist.validator";
 
 export class ShortlistService {
   static readonly VALID_LIFECYCLE_STATES: ShortlistLifecycleState[] = [
@@ -35,33 +37,14 @@ export class ShortlistService {
     };
   }
 
-  static async saveShortlistItem(
-    userId: string,
-    params: {
-      recruitmentId: string;
-      lifecycleState?: ShortlistLifecycleState;
-      priority?: string;
-      personalNotes?: string | null;
-      targetPrepDays?: number | null;
-    }
-  ) {
-    const {
-      recruitmentId,
-      lifecycleState = "BOOKMARKED",
-      priority = "MEDIUM",
-      personalNotes,
-      targetPrepDays,
-    } = params;
-
-    if (!recruitmentId) {
-      throw new Error("recruitmentId is required");
+  static async saveShortlistItem(userId: string, rawInput: unknown) {
+    const validation = validateSaveShortlistInput(rawInput);
+    if (!validation.success || !validation.data) {
+      throw new ValidationError(validation.error || "Invalid shortlist payload");
     }
 
-    if (!this.VALID_LIFECYCLE_STATES.includes(lifecycleState)) {
-      throw new Error(
-        `Invalid lifecycleState. Allowed: ${this.VALID_LIFECYCLE_STATES.join(", ")}`
-      );
-    }
+    const { recruitmentId, lifecycleState, priority, personalNotes, targetPrepDays } =
+      validation.data;
 
     const item = await ShortlistRepository.upsertShortlistItem({
       userId,
@@ -81,7 +64,7 @@ export class ShortlistService {
 
   static async removeShortlistItem(userId: string, recruitmentId: string) {
     if (!recruitmentId) {
-      throw new Error("recruitmentId is required");
+      throw new ValidationError("recruitmentId is required");
     }
     await ShortlistRepository.deleteShortlistItem(userId, recruitmentId);
     return {
