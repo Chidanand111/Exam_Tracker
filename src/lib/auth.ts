@@ -2,8 +2,9 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { UserSession } from "@/types";
+import { serverConfig } from "@/config/env";
 
-const JWT_SECRET = process.env.JWT_SECRET || "bharat-exam-tracker-dev-key-local-only-super-safe";
+const JWT_SECRET = serverConfig.jwtSecret;
 export const AUTH_COOKIE_NAME = "bharat_exam_session";
 
 export async function hashPassword(password: string): Promise<string> {

@@ -25,17 +25,17 @@ import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal"
 import { ShortlistButton } from "@/components/shortlist/ShortlistButton";
 import { ShortlistLifecycleState } from "@/types";
 
+import { useShortlist } from "@/hooks/use-shortlist";
+
 export default function ShortlistPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [counts, setCounts] = useState<Record<string, number>>({
-    ALL: 0,
-    BOOKMARKED: 0,
-    INTERESTED: 0,
-    APPLIED: 0,
-    COMPLETED: 0,
-  });
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("ALL");
+  const {
+    items,
+    counts,
+    loading,
+    removeItem: handleRemove,
+    updateState: handleStateChange,
+  } = useShortlist(activeTab);
 
   // Modals state
   const [checklistModalRec, setChecklistModalRec] = useState<{
@@ -52,61 +52,6 @@ export default function ShortlistPage() {
     orgName?: string;
     applyUrl?: string | null;
   } | null>(null);
-
-  useEffect(() => {
-    fetchShortlist();
-  }, [activeTab]);
-
-  const fetchShortlist = async () => {
-    setLoading(true);
-    try {
-      const url =
-        activeTab === "ALL"
-          ? "/api/shortlist"
-          : `/api/shortlist?state=${activeTab}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.success) {
-        setItems(data.items || []);
-        if (data.counts) setCounts(data.counts);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemove = async (recruitmentId: string) => {
-    try {
-      await fetch(`/api/shortlist?recruitmentId=${recruitmentId}`, {
-        method: "DELETE",
-      });
-      setItems((prev) => prev.filter((i) => i.recruitmentId !== recruitmentId));
-      fetchShortlist();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleStateChange = async (
-    recruitmentId: string,
-    newState: ShortlistLifecycleState
-  ) => {
-    try {
-      await fetch("/api/shortlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recruitmentId,
-          lifecycleState: newState,
-        }),
-      });
-      fetchShortlist();
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const TABS = [
     { key: "ALL", label: "All Opportunities", icon: Bookmark },

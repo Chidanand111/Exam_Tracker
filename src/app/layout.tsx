@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
@@ -13,12 +13,15 @@ if (typeof window === "undefined" && process.env.NODE_ENV !== "test") {
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+};
+
 export const metadata: Metadata = {
   title: "BharatExam Tracker | Indian Government Exam & Recruitment Discovery",
   description:
     "Discover verified government exams, understand exact eligibility and in-hand salary, apply through official commission websites, track dynamic exam stages, and get instant reminders.",
   manifest: "/manifest.json",
-  themeColor: "#0f172a",
   keywords: [
     "Government Exams India",
     "SSC CGL 2026",

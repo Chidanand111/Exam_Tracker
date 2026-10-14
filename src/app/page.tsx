@@ -16,28 +16,16 @@ import {
 } from "lucide-react";
 import { RecruitmentItem } from "@/types";
 import { RecruitmentCard } from "@/components/recruitments/RecruitmentCard";
+import { useRecruitments } from "@/hooks/use-recruitments";
 
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [recruitments, setRecruitments] = useState<RecruitmentItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchFeaturedRecruitments();
-  }, []);
-
-  const fetchFeaturedRecruitments = async () => {
-    try {
-      const res = await fetch("/api/recruitments?sort=newest");
-      const data = await res.json();
-      setRecruitments(data.recruitments || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    recruitments,
+    loading,
+    refresh: fetchFeaturedRecruitments,
+  } = useRecruitments({ initialFilters: { sortBy: "newest" } });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
