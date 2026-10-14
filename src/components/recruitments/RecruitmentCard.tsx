@@ -111,45 +111,41 @@ export function RecruitmentCard({
     new Date(recruitment.appDeadline).getTime() > Date.now();
 
   return (
-    <div className="glass-card rounded-2xl p-5 flex flex-col justify-between border border-slate-800 relative group overflow-hidden">
-      {/* Top Banner & Status */}
+    <div className="glass-card rounded-xl p-5 flex flex-col justify-between border border-[var(--border-default)] relative group">
+      {/* ── Organization & Status header ── */}
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center font-bold text-slate-300 text-xs shadow-inner">
-              <Building2 className="w-5 h-5 text-blue-400" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] flex items-center justify-center shrink-0">
+              <Building2 className="w-4.5 h-4.5 text-[var(--accent-400)]" style={{ width: '18px', height: '18px' }} />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  {recruitment.organization.shortName}
+            <div className="min-w-0">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide block truncate">
+                {recruitment.organization.shortName}
+                <span className="font-normal normal-case tracking-normal text-[var(--text-disabled)] ml-1">
+                  · {recruitment.organization.category}
                 </span>
-                <span className="text-[10px] text-slate-500 font-medium">
-                  • {recruitment.organization.category}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-xs">
+              </span>
+              <p className="text-xs text-[var(--text-tertiary)] truncate">
                 {recruitment.organization.name}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {onToggleCompare && (
               <button
                 type="button"
                 onClick={onToggleCompare}
-                className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-colors ${
+                className={`px-2 py-1 rounded-md border text-xs font-medium flex items-center gap-1 transition-colors ${
                   isSelectedForCompare
-                    ? "bg-blue-600/25 border-blue-500 text-blue-300"
-                    : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
+                    ? "bg-[var(--semantic-info-bg)] border-[var(--semantic-info-border)] text-[var(--accent-400)]"
+                    : "bg-[var(--bg-surface)] border-[var(--border-default)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                 }`}
                 title="Select for side-by-side comparison"
               >
                 <Scale className="w-3.5 h-3.5" />
-                <span className="text-[10px] hidden sm:inline">
-                  {isSelectedForCompare ? "Comparing" : "Compare"}
-                </span>
+                <span className="hidden sm:inline">{isSelectedForCompare ? "Comparing" : "Compare"}</span>
               </button>
             )}
             <ShortlistButton recruitmentId={recruitment.id} variant="icon" />
@@ -157,174 +153,110 @@ export function RecruitmentCard({
           </div>
         </div>
 
-        {/* Transparent Eligibility Compatibility Overlay (Indicative, non-destructive) */}
-        <div className="mb-3 p-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-inner space-y-2">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <EligibilityBadge
-                status={match.analysis?.determination || "ELIGIBILITY_UNCLEAR"}
-                size="sm"
-              />
-
-              {candidateProfile && candidateProfile.isCompleted && (
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                    match.score >= 80
-                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                      : match.score >= 60
-                      ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                      : "bg-slate-800 text-slate-400 border-slate-700"
-                  }`}
-                >
-                  {match.score}% Score
-                </span>
-              )}
-
-              {match.isFeeExempt && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                  🎉 100% Fee Free
-                </span>
-              )}
-            </div>
-
-            {/* "Why am I eligible?" Action Button */}
-            {match.analysis && (
-              <button
-                type="button"
-                onClick={() => setShowWhyEligibleModal(true)}
-                className="text-[11px] font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 shrink-0"
-              >
-                <Sparkles className="w-3 h-3 text-blue-400" />
-                <span>Why am I eligible?</span>
-              </button>
-            )}
-          </div>
-
-          {/* Quick Transparent Factor Explanations */}
-          {match.analysis ? (
-            <div className="space-y-1 text-[11px]">
-              {match.analysis.factors.slice(0, 3).map((f, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-1.5 truncate ${
-                    f.status === "PASSED"
-                      ? "text-emerald-300"
-                      : f.status === "FAILED"
-                      ? "text-rose-300 font-semibold"
-                      : f.status === "CONDITION_REQUIRES_VERIFICATION"
-                      ? "text-amber-300"
-                      : "text-slate-400 italic"
-                  }`}
-                >
-                  <span className="shrink-0 font-bold">
-                    {f.status === "PASSED"
-                      ? "✓"
-                      : f.status === "FAILED"
-                      ? "✕"
-                      : f.status === "CONDITION_REQUIRES_VERIFICATION"
-                      ? "⚠"
-                      : "?"}
-                  </span>
-                  <span className="truncate">{f.explanation}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[11px] text-slate-400 italic">
-              Eligibility cannot be determined from the available information.
-            </p>
-          )}
-
-          {/* Subtle Non-Official Disclaimer */}
-          <div className="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
-            <span>Automated indicative analysis • Not an official decision</span>
-            <button
-              type="button"
-              onClick={() => setShowWhyEligibleModal(true)}
-              className="text-blue-400 hover:underline font-medium"
-            >
-              View 17 factors →
-            </button>
-          </div>
-        </div>
-
-        {/* Title & Reliability Badges */}
-        <div className="space-y-1.5 mb-2">
+        {/* ── Title (primary information, front and centre) ── */}
+        <div className="mb-3">
           <Link
             href={`/recruitments/${(recruitment as any).slug || recruitment.id}`}
-            className="group-hover:text-blue-400 transition-colors block"
+            className="hover:text-[var(--accent-400)] transition-colors block"
           >
-            <h3 className="font-bold text-white text-base leading-snug tracking-tight">
+            <h3 className="font-semibold text-[var(--text-primary)] text-base leading-snug">
               {recruitment.title}
             </h3>
           </Link>
 
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {/* Reliability badge row */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             {(recruitment as any).sourceReliabilityState && (
               <span
-                className={`text-[9px] px-2 py-0.5 rounded-full border font-medium ${
+                className={`text-xs px-2 py-0.5 rounded-md border font-medium ${
                   (recruitment as any).sourceReliabilityState === "VERIFIED_OFFICIAL"
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    ? "bg-[var(--semantic-success-bg)] text-[var(--semantic-success)] border-[var(--semantic-success-border)]"
                     : (recruitment as any).sourceReliabilityState === "CONFLICTING_INFORMATION"
-                    ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                    : (recruitment as any).sourceReliabilityState === "ARCHIVED"
-                    ? "bg-purple-500/10 text-purple-300 border-purple-500/30"
-                    : "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                    ? "bg-[var(--semantic-danger-bg)] text-[var(--semantic-danger)] border-[var(--semantic-danger-border)]"
+                    : "bg-[var(--semantic-info-bg)] text-[var(--accent-400)] border-[var(--semantic-info-border)]"
                 }`}
               >
                 {(recruitment as any).sourceReliabilityState === "VERIFIED_OFFICIAL"
-                  ? "✓ Verified Official Source"
+                  ? "✓ Verified Official"
                   : (recruitment as any).sourceReliabilityState === "CONFLICTING_INFORMATION"
-                  ? "⚠ Conflicting Notices Detected"
-                  : (recruitment as any).sourceReliabilityState === "ARCHIVED"
-                  ? "Archived Historical Cycle"
+                  ? "⚠ Conflicting Notices"
                   : "Official Source Found"}
               </span>
             )}
-            {(recruitment as any).isArchived && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-                Historical Archive
-              </span>
-            )}
             {(recruitment as any).cycleName && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] text-[var(--text-tertiary)] font-mono">
                 {(recruitment as any).cycleName}
               </span>
             )}
           </div>
         </div>
 
-        {/* Short Description */}
-        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">
+        {/* ── Short description ── */}
+        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed mb-4">
           {recruitment.shortDescription}
         </p>
 
-        {/* Highlights Grid */}
-        <div className="grid grid-cols-2 gap-2.5 py-3 border-y border-slate-800/80 mb-4 text-xs">
-          {/* Vacancies */}
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-400 shrink-0" />
+        {/* ── Compact eligibility indicator ── */}
+        <div className="mb-3 flex items-center gap-2 flex-wrap">
+          <EligibilityBadge
+            status={match.analysis?.determination || "ELIGIBILITY_UNCLEAR"}
+            size="sm"
+          />
+          {candidateProfile?.isCompleted && (
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                match.score >= 80
+                  ? "bg-[var(--semantic-success-bg)] text-[var(--semantic-success)] border-[var(--semantic-success-border)]"
+                  : match.score >= 60
+                  ? "bg-[var(--semantic-info-bg)] text-[var(--accent-400)] border-[var(--semantic-info-border)]"
+                  : "bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-default)]"
+              }`}
+            >
+              {match.score}% match
+            </span>
+          )}
+          {match.isFeeExempt && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              Fee-free category
+            </span>
+          )}
+          {match.analysis && (
+            <button
+              type="button"
+              onClick={() => setShowWhyEligibleModal(true)}
+              className="text-xs font-medium text-[var(--accent-400)] hover:underline flex items-center gap-1 ml-auto"
+            >
+              <Sparkles className="w-3 h-3" />
+              Eligibility details
+            </button>
+          )}
+        </div>
+
+        {/* (title/description moved above eligibility) */}
+
+        {/* ── Key facts grid ── */}
+        <div className="grid grid-cols-2 gap-3 py-3 border-y border-[var(--border-subtle)] mb-3 text-sm">
+          <div className="flex items-start gap-2">
+            <Users className="w-3.5 h-3.5 text-[var(--accent-400)] shrink-0 mt-0.5" />
             <div>
-              <span className="text-slate-400 text-[10px] block leading-none">Vacancies</span>
-              <span className="font-semibold text-white">
-                {recruitment.vacancies ? `${recruitment.vacancies.toLocaleString()} Posts` : "Not announced"}
+              <span className="text-xs text-[var(--text-tertiary)] block">Vacancies</span>
+              <span className="font-semibold text-[var(--text-primary)] text-sm">
+                {recruitment.vacancies ? `${recruitment.vacancies.toLocaleString("en-IN")} posts` : "Not announced"}
               </span>
             </div>
           </div>
 
-          {/* Fresher Eligibility */}
-          <div className="flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-start gap-2">
+            <GraduationCap className="w-3.5 h-3.5 text-[var(--semantic-success)] shrink-0 mt-0.5" />
             <div>
-              <span className="text-slate-400 text-[10px] block leading-none">Freshers</span>
-              <span className="font-semibold text-emerald-400">
-                {recruitment.fresherEligible ? "Fully Eligible" : "Experience Req."}
+              <span className="text-xs text-[var(--text-tertiary)] block">Freshers</span>
+              <span className={`font-semibold text-sm ${recruitment.fresherEligible ? "text-[var(--semantic-success)]" : "text-[var(--text-secondary)]"}`}>
+                {recruitment.fresherEligible ? "Eligible" : "Exp. required"}
               </span>
             </div>
           </div>
 
-          {/* Salary In-Hand Estimate */}
-          <div className="col-span-2 pt-1">
+          <div className="col-span-2">
             <SalaryBadge
               payScale={recruitment.payScale}
               inHandMin={recruitment.inHandSalaryMin}
@@ -333,205 +265,196 @@ export function RecruitmentCard({
           </div>
         </div>
 
-        {/* Qualifications Badges */}
-        <div className="flex flex-wrap items-center gap-1.5 mb-4">
-          {recruitment.qualifications.slice(0, 4).map((q) => (
-            <span
-              key={q.id}
-              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/60"
-            >
-              {q.qualificationCode.replace("_", " ")}
-            </span>
-          ))}
-          {recruitment.qualifications.length > 4 && (
-            <span className="text-[10px] text-slate-400">
-              +{recruitment.qualifications.length - 4} more
-            </span>
-          )}
-        </div>
-
-        {/* Dynamic Stages sequence preview */}
-        {recruitment.stages && recruitment.stages.length > 0 && (
-          <div className="mb-4 p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
-            <span className="text-slate-500 font-semibold uppercase text-[9px]">Stages:</span>
-            {recruitment.stages.map((st, idx) => (
-              <React.Fragment key={st.id}>
-                <span className="text-slate-300 font-medium">{st.stageName}</span>
-                {idx < recruitment.stages.length - 1 && <span className="text-slate-600">→</span>}
-              </React.Fragment>
+        {/* ── Qualification tags ── */}
+        {recruitment.qualifications.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            {recruitment.qualifications.slice(0, 4).map((q) => (
+              <span
+                key={q.id}
+                className="text-xs px-2 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
+              >
+                {q.qualificationCode.replace("_", " ")}
+              </span>
             ))}
+            {recruitment.qualifications.length > 4 && (
+              <span className="text-xs text-[var(--text-tertiary)]">
+                +{recruitment.qualifications.length - 4} more
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* ── Exam stages preview ── */}
+        {recruitment.stages && recruitment.stages.length > 0 && (
+          <div className="mb-3 p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex items-center gap-1.5 overflow-hidden">
+            <span className="text-xs text-[var(--text-disabled)] font-medium uppercase tracking-wider shrink-0">Stages:</span>
+            <div className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
+              {recruitment.stages.map((st, idx) => (
+                <React.Fragment key={st.id}>
+                  <span className="text-xs text-[var(--text-secondary)] font-medium">{st.stageName}</span>
+                  {idx < recruitment.stages.length - 1 && <span className="text-[var(--text-disabled)] text-xs">→</span>}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Footer Dates & Action Buttons */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
+      {/* ── Footer ── */}
+      <div className="pt-3 border-t border-[var(--border-subtle)] mt-1">
+        {/* Deadline row */}
+        <div className="flex items-center justify-between text-xs text-[var(--text-tertiary)] mb-3">
           <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>Last Date: <strong className="text-slate-200">{formattedDeadline}</strong></span>
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span>Last date: <strong className="text-[var(--text-secondary)] font-medium">{formattedDeadline}</strong></span>
           </div>
           {isClosingSoon && (
-            <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-              Closing Soon
+            <span className="text-xs font-semibold text-amber-400 bg-[var(--semantic-warning-bg)] px-2 py-0.5 rounded border border-[var(--semantic-warning-border)]">
+              Closing soon
             </span>
           )}
         </div>
 
-        {/* Check Official Notification Action Link */}
-        <div className="flex items-center justify-between text-xs pb-2.5 mb-2.5 border-b border-slate-800/80">
+        {/* Notification link */}
+        <div className="flex items-center justify-between mb-3">
           <a
             href={recruitment.officialNotificationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-blue-400 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--accent-400)] transition-colors"
           >
-            <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span>Check official notification</span>
-            <ExternalLink className="w-3 h-3 text-slate-500" />
+            <FileText className="w-3.5 h-3.5 text-[var(--accent-400)] shrink-0" />
+            Official notification
+            <ExternalLink className="w-3 h-3 text-[var(--text-disabled)]" />
           </a>
-
-          {match.analysis && (
-            <button
-              type="button"
-              onClick={() => setShowWhyEligibleModal(true)}
-              className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1"
-            >
-              <span>Why am I eligible?</span>
-              <span>→</span>
-            </button>
-          )}
         </div>
 
-        {/* Secondary Workflow Buttons: Checklist, Vault & Private Notes */}
-        <div className="grid grid-cols-3 gap-1.5 mb-2">
+        {/* ── Secondary actions (workflow tools) ── */}
+        <div className="flex items-center gap-1.5 mb-3">
           <button
             type="button"
             onClick={() => setShowChecklistModal(true)}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/25 text-blue-300 text-[10px] sm:text-[11px] font-semibold transition-colors"
-            title="Application Preparation Checklist"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[var(--text-secondary)] font-medium transition-colors"
+            title="Application preparation checklist"
           >
-            <FileCheck2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span className="truncate">Checklist</span>
+            <FileCheck2 className="w-3.5 h-3.5 shrink-0" />
+            Checklist
           </button>
-
           <button
             type="button"
             onClick={() => setShowVaultModal(true)}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-300 text-[10px] sm:text-[11px] font-semibold transition-colors"
-            title="Reference & Receipt Vault"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[var(--text-secondary)] font-medium transition-colors"
+            title="Reference & receipt vault"
           >
-            <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate">Vault</span>
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            Vault
           </button>
-
           <button
             type="button"
             onClick={() => setShowNotesModal(true)}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-[10px] sm:text-[11px] font-semibold transition-colors"
-            title="Private Workspace Notes"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[var(--text-secondary)] font-medium transition-colors"
+            title="Private workspace notes"
           >
-            <FileText className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span className="truncate">Notes</span>
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            Notes
           </button>
         </div>
 
-        {/* Action Buttons */}
+        {/* ── Primary actions ── */}
         <div className="grid grid-cols-2 gap-2">
-          {/* Apply Officially Button */}
           <button
             onClick={handleApplyClick}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02]"
-            title={`Apply on Official Portal: ${recruitment.officialApplyUrl}`}
+            className="btn btn-primary"
+            title={`Apply on official portal: ${recruitment.officialApplyUrl}`}
           >
-            <span>Apply Officially</span>
-            <ExternalLink className="w-3.5 h-3.5 text-blue-200" />
+            Apply Officially
+            <ExternalLink className="w-3.5 h-3.5" />
           </button>
 
-          {/* I've Applied / Tracked Button */}
           {applied ? (
             <Link
               href="/my-exams"
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold hover:bg-emerald-600/30 transition-colors"
+              className="btn btn-sm flex items-center justify-center gap-1.5 bg-[var(--semantic-success-bg)] border border-[var(--semantic-success-border)] text-[var(--semantic-success)] hover:bg-[rgba(16,185,129,0.18)] transition-colors font-semibold text-xs rounded-md py-2 px-3"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>✓ Tracking</span>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Tracking
             </Link>
           ) : (
             <button
               onClick={() => setShowApplyModal(true)}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+              className="btn btn-secondary btn-sm"
             >
-              <BookmarkCheck className="w-3.5 h-3.5 text-blue-400" />
-              <span>I've Applied</span>
+              <BookmarkCheck className="w-3.5 h-3.5" />
+              I&apos;ve Applied
             </button>
           )}
         </div>
       </div>
 
-      {/* Modal for "I've Applied" */}
+      {/* ── "I've Applied" modal ── */}
       {showApplyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-2xl glass-panel bg-slate-900 border border-slate-700 shadow-2xl p-6">
-            <h3 className="text-base font-bold text-white">Track Your Application</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Add {recruitment.title} to your personal dashboard to track dynamic exam stages, shift assignments, and admit cards.
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowApplyModal(false); }}
+        >
+          <div className="relative w-full max-w-md rounded-xl glass-panel border border-[var(--border-default)] shadow-[var(--shadow-lg)] p-6">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">Track Your Application</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              Add <strong className="text-[var(--text-primary)] font-medium">{recruitment.title}</strong> to your dashboard to track exam stages, shifts, and admit cards.
             </p>
 
-            <form onSubmit={handleMarkApplied} className="mt-4 space-y-3">
+            <form onSubmit={handleMarkApplied} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Registration / Application Number (Optional)
+                <label className="form-label">
+                  Registration / Application Number <span className="font-normal text-[var(--text-disabled)]">(optional)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. SSC2026CGL984210"
                   value={regNo}
                   onChange={(e) => setRegNo(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="form-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Roll Number (If allotted)
+                <label className="form-label">
+                  Roll Number <span className="font-normal text-[var(--text-disabled)]">(if allotted)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. 2201048892"
                   value={rollNo}
                   onChange={(e) => setRollNo(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="form-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Personal Target / Notes
-                </label>
+                <label className="form-label">Personal target / notes</label>
                 <input
                   type="text"
-                  placeholder="e.g. Target Post: Inspector of Income Tax"
+                  placeholder="e.g. Target: Inspector of Income Tax"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="form-input"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300 hover:bg-slate-700 font-medium"
+                  className="btn btn-ghost btn-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/30 transition-colors"
+                  className="btn btn-primary btn-sm bg-[var(--semantic-success)] border-[var(--semantic-success)] hover:opacity-90"
                 >
-                  {loading ? "Adding..." : "Add to My Exams"}
+                  {loading ? "Saving…" : "Add to My Exams"}
                 </button>
               </div>
             </form>

@@ -20,7 +20,6 @@ import {
   Info,
   Filter,
 } from "lucide-react";
-import { Navbar } from "@/components/layout/Navbar";
 import { ApplicationChecklistModal } from "@/components/checklists/ApplicationChecklistModal";
 import { ApplicationVaultModal } from "@/components/vault/ApplicationVaultModal";
 import { ShortlistButton } from "@/components/shortlist/ShortlistButton";
@@ -118,10 +117,7 @@ export default function ShortlistPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -346,7 +342,6 @@ export default function ShortlistPage() {
             })}
           </div>
         )}
-      </main>
 
       {/* Checklist Modal */}
       {checklistModalRec && (

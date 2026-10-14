@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans bg-[#090d16] text-slate-100 flex flex-col min-h-screen antialiased`}>
+      <body className={`${inter.variable} font-sans bg-background text-slate-100 flex flex-col min-h-screen antialiased`}>
         {/* Skip to Main Content Link for Keyboard Accessibility */}
         <a href="#main-content" className="skip-to-content">
           Skip to main content

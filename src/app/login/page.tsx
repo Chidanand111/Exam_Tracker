@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { LogIn, GraduationCap, ShieldCheck, CheckCircle2, UserCheck } from "lucide-react";
+import { LogIn, ShieldCheck, UserCheck } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -74,128 +74,135 @@ function LoginForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-16">
-      <div className="glass-panel rounded-3xl p-7 border border-slate-800 shadow-2xl space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm">
         {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-blue-600 to-emerald-500 p-[2px] shadow-lg shadow-blue-500/20 mb-1">
-            <div className="w-full h-full bg-[#0a0f1d] rounded-[14px] flex items-center justify-center font-black text-white text-lg">
+        <div className="text-center mb-8">
+          <div className="inline-flex w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 via-blue-600 to-emerald-500 p-[1.5px] shadow-md mb-4">
+            <div className="w-full h-full bg-[#07090f] rounded-[10px] flex items-center justify-center font-black text-white text-lg">
               BE
             </div>
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            {isRegistering ? "Create Aspirant Account" : "Sign In to BharatExam"}
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+            {isRegistering ? "Create your account" : "Sign in to BharatExam"}
           </h1>
-          <p className="text-xs text-slate-400">
-            Track your government recruitment stages, shifts, and admit cards
+          <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+            Track government recruitment stages, shifts, and admit cards
           </p>
         </div>
 
-        {/* 1-Click Instant Demo Evaluation Bar */}
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-700/80 space-y-2.5">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block text-center">
-            ⚡ Quick 1-Click Demo Evaluation
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("aspirant@bharatexam.in", "Aspirant@123")}
-              className="p-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-colors"
-            >
-              <GraduationCap className="w-4 h-4 text-emerald-400" />
-              <span>Fresher Aspirant</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("admin@bharatexam.in", "Admin@123")}
-              className="p-2.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-colors"
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>Portal Officer (Admin)</span>
-            </button>
+        <div className="card-surface p-6 space-y-5">
+          {/* 1-Click Demo Evaluation */}
+          <div className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] space-y-2.5">
+            <span className="text-xs font-semibold text-[var(--text-tertiary)] block text-center uppercase tracking-wider">
+              Quick demo — no account needed
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("aspirant@bharatexam.in", "Aspirant@123")}
+                className="p-2.5 rounded-lg bg-[var(--semantic-info-bg)] hover:bg-[rgba(59,130,246,0.18)] border border-[var(--semantic-info-border)] text-[var(--accent-400)] text-sm font-semibold flex flex-col items-center justify-center gap-1 transition-colors"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>Aspirant</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("admin@bharatexam.in", "Admin@123")}
+                className="p-2.5 rounded-lg bg-[var(--semantic-warning-bg)] hover:bg-[rgba(245,158,11,0.18)] border border-[var(--semantic-warning-border)] text-amber-400 text-sm font-semibold flex flex-col items-center justify-center gap-1 transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Admin</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
-            {error}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          {isRegistering && (
-            <div>
-              <label className="block text-slate-300 font-medium mb-1">Full Name</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Ramesh Kumar"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-              />
+          {error && (
+            <div role="alert" className="p-3 rounded-lg bg-[var(--semantic-danger-bg)] border border-[var(--semantic-danger-border)] text-sm text-[var(--semantic-danger)]">
+              {error}
             </div>
           )}
 
-          <div>
-            <label className="block text-slate-300 font-medium mb-1">Email Address</label>
-            <input
-              type="email"
-              required
-              placeholder="e.g. aspirant@bharatexam.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-            />
+          {/* Auth Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isRegistering && (
+              <div>
+                <label htmlFor="name" className="form-label">Full Name</label>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  placeholder="e.g. Ramesh Kumar"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="form-input"
+                />
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="form-label">Email address</label>
+              <input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="e.g. aspirant@bharatexam.in"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="form-label">Password</label>
+              <input
+                id="password"
+                type="password"
+                required
+                autoComplete={isRegistering ? "new-password" : "current-password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-input"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary btn-lg w-full"
+            >
+              {loading ? "Processing…" : isRegistering ? "Create account" : "Sign in"}
+            </button>
+          </form>
+
+          <div className="text-center pt-2 border-t border-[var(--border-subtle)] text-sm text-[var(--text-secondary)]">
+            {isRegistering ? (
+              <span>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsRegistering(false)}
+                  className="text-[var(--accent-400)] hover:underline font-semibold"
+                >
+                  Sign in
+                </button>
+              </span>
+            ) : (
+              <span>
+                Don&apos;t have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsRegistering(true)}
+                  className="text-[var(--accent-400)] hover:underline font-semibold"
+                >
+                  Create account
+                </button>
+              </span>
+            )}
           </div>
-
-          <div>
-            <label className="block text-slate-300 font-medium mb-1">Password</label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-600/30 transition-colors disabled:opacity-50"
-          >
-            {loading ? "Processing..." : isRegistering ? "Create My Account" : "Sign In"}
-          </button>
-        </form>
-
-        <div className="text-center pt-2 border-t border-slate-800 text-xs text-slate-400">
-          {isRegistering ? (
-            <span>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setIsRegistering(false)}
-                className="text-blue-400 hover:underline font-semibold"
-              >
-                Sign In
-              </button>
-            </span>
-          ) : (
-            <span>
-              Don't have an account yet?{" "}
-              <button
-                type="button"
-                onClick={() => setIsRegistering(true)}
-                className="text-blue-400 hover:underline font-semibold"
-              >
-                Create Account
-              </button>
-            </span>
-          )}
         </div>
       </div>
     </div>
