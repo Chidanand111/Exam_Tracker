@@ -1,15 +1,45 @@
 # BharatExam Tracker
 
 > **Indian Government Exam & Recruitment Discovery + Personal Application Tracking Platform**  
-> *Designed for Graduates, Freshers, and Aspirants with Dynamic Stage Progression & Official Source Integrity*
+> *Engineered for Graduates, Freshers, and Aspirants with Dynamic Stage Progression & Official Source Integrity*
 
 ---
 
 ## 🌟 Overview
 
-**BharatExam Tracker** is a production-ready web application built to help Indian graduates and freshers discover government exams, verify eligibility and pay scales, apply through official commission websites, track their applications through dynamic selection rounds, and receive timely alerts.
+**BharatExam Tracker** is a production-grade web application engineered to help Indian graduates and freshers discover government exams, verify eligibility and pay scales, apply through official commission websites, track their applications through dynamic selection rounds, and receive timely alerts.
 
 Unlike typical static job boards, BharatExam Tracker enforces **strict official data integrity** (zero fabricated data, direct `.gov.in` linking), generic arbitrary stages ($N$-stage pipelines like Tier 1 $\rightarrow$ Tier 2 $\rightarrow$ DV or CBT 1 $\rightarrow$ CBT 2 $\rightarrow$ CBAT), multiple shift management, and a dynamic qualification state machine.
+
+---
+
+## 🏗️ Architecture Overview
+
+The platform is structured with strict separation between presentation, domain logic, data persistence, and error resilience:
+
+```
+src/
+├── app/                  # Next.js App Router (pages, layouts, error boundaries, API routes)
+│   ├── error.tsx         # Root error boundary with digest tracking and recovery
+│   └── not-found.tsx     # Custom 404 page
+├── components/           # Presentation UI components grouped by domain (admin, vault, checklists)
+├── config/               # Centralized runtime environment validation (env.ts)
+├── docs/                 # State management and disaster recovery architecture
+├── hooks/                # Custom React hooks with request cancellation and optimistic rollbacks
+├── lib/                  # Shared domain engines (eligibility, profile matching, auth, apiClient)
+├── server/               # Backend architecture
+│   ├── repositories/     # Prisma data access queries (recruitment, shortlist)
+│   ├── services/         # Domain services and coordination
+│   └── utils/            # api-handler.ts with centralized error logging and secret redaction
+├── types/                # Central TypeScript definitions and models
+└── validators/           # Runtime request validators and schema assertions
+```
+
+For in-depth architectural details, see:
+- 📖 [docs/architecture.md](docs/architecture.md) — Layered architecture, data flow, and separation of concerns.
+- 📖 [docs/development.md](docs/development.md) — Engineering standards, naming conventions, and contribution rules.
+- 📖 [docs/api.md](docs/api.md) — API endpoint contracts, authentication, error formats, and request examples.
+- 📖 [docs/environment.md](docs/environment.md) — Environment variables, sensitivity scopes, and local setup.
 
 ---
 
@@ -45,37 +75,35 @@ Unlike typical static job boards, BharatExam Tracker enforces **strict official 
    - Dynamic preparation checklists across 4 phases: *Before Applying*, *Document Prep*, *Application Form*, and *Post Submission*.
    - Universal defaults + 139 recruitment-tailored official checklist items + ability for aspirants to add personal custom checklist items.
 10. **Application Reference & Receipt Vault**:
-   - Secure private record for application numbers, registration numbers, roll numbers, portal IDs, payment references, transaction IDs, submission dates, PDFs, and receipts.
-   - 1-click clipboard copy for all identifiers.
-   - Strict non-governmental verification disclosure.
+    - Secure private record for application numbers, registration numbers, roll numbers, portal IDs, payment references, transaction IDs, submission dates, PDFs, and receipts.
+    - 1-click clipboard copy for all identifiers.
+    - Strict non-governmental verification disclosure.
 11. **Recruitment Comparison Workspace**:
-   - Multi-opportunity side-by-side comparative matrix across 16 core attributes (eligibility, age brackets, experience, vacancies, pay scales, dates, shifts, stages, official portal links).
-   - Strict adherence to neutral comparison (zero ranking scores or winner determinations).
+    - Multi-opportunity side-by-side comparative matrix across 16 core attributes (eligibility, age brackets, experience, vacancies, pay scales, dates, shifts, stages, official portal links).
+    - Strict adherence to neutral comparison (zero ranking scores or winner determinations).
 12. **Saved Searches & Instant Presets**:
-   - Save custom filter configurations (degrees, sectors, salaries, locations, fresher eligibility).
-   - Fast presets for *Freshers ₹50k+*, *B.Tech Govt Jobs*, *Central Ministries*, and *Banking Opportunities*.
+    - Save custom filter configurations (degrees, sectors, salaries, locations, fresher eligibility).
+    - Fast presets for *Freshers ₹50k+*, *B.Tech Govt Jobs*, *Central Ministries*, and *Banking Opportunities*.
 13. **New-Match Vacancy Discovery**:
-   - Automated notification triggers alerting aspirants when new vacancies match their saved criteria without taking external actions.
+    - Automated notification triggers alerting aspirants when new vacancies match their saved criteria without taking external actions.
 14. **Bookmarking & 4-Stage Shortlisting**:
-   - Dedicated `/shortlist` workspace tracking opportunities across `Bookmarked`, `Interested`, `Applied`, and `Completed`.
-   - Clear segregation between bookmarks and actual submitted applications.
+    - Dedicated `/shortlist` workspace tracking opportunities across `Bookmarked`, `Interested`, `Applied`, and `Completed`.
+    - Clear segregation between bookmarks and actual submitted applications.
 15. **17-Factor Transparent Eligibility Engine**:
-   - Multi-tier compatibility classification (`Eligible`, `Potentially Eligible`, `Eligibility Unclear`, `Not Eligible`).
-   - Detailed breakdown explaining degree, branch, age as on cut-off date, domicile, reservation, and fee relaxations with official notification clauses.
+    - Multi-tier compatibility classification (`Eligible`, `Potentially Eligible`, `Eligibility Unclear`, `Not Eligible`).
+    - Detailed breakdown explaining degree, branch, age as on cut-off date, domicile, reservation, and fee relaxations with official notification clauses.
 
 ---
 
-## 🛠 Tech Stack
+## 🛠 Prerequisites
 
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, Lucide React
-- **Backend**: Next.js Route Handlers & Server Logic
-- **Database**: PostgreSQL (Hosted on Neon serverless database)
-- **ORM**: Prisma Client with pooled connection (`pgbouncer=true`) and direct migration support
-- **Auth**: Salted `bcryptjs` password hashing with HTTP-only JWT session cookies
+- **Node.js**: `v18.18.0` or higher (LTS recommended)
+- **npm**: `v9.0.0` or higher
+- **PostgreSQL**: `v14` or higher (or cloud provider like Neon DB)
 
 ---
 
-## 📦 Getting Started
+## 📦 Installation & Setup
 
 ### 1. Clone the repository
 ```bash
@@ -89,11 +117,11 @@ npm install
 ```
 
 ### 3. Configure environment variables
-Copy `.env.example` to `.env`:
+Copy the template configuration:
 ```bash
 cp .env.example .env
 ```
-Fill in your database connection string and secret key.
+Fill in your database connection string and secure JWT secret key. See [docs/environment.md](docs/environment.md) for variable definitions.
 
 ### 4. Push database schema & seed authentic recruitments
 ```bash
@@ -101,31 +129,48 @@ npx prisma db push
 node scripts/seed.mjs
 ```
 
-### 5. Start the development server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+---
+
+## ⚙️ Development & Production Commands
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Starts local Next.js development server at `http://localhost:3000` |
+| `npm run build` | Generates Prisma client and compiles optimized production build |
+| `npm start` | Runs the compiled production build |
+| `npm run lint` | Runs Next.js ESLint checks |
+| `npm test` | Runs the automated test suite once via Vitest |
+| `npm run test:watch` | Runs Vitest in interactive watch mode |
+| `npx tsc --noEmit` | Validates TypeScript types across the entire project |
+| `npm run db:push` | Pushes schema changes directly to the PostgreSQL database |
+| `npm run db:seed` | Seeds database with authentic Indian government recruitment data |
 
 ---
 
-## 🚀 Vercel Deployment Configuration
+## 🧪 Verification & Quality Checks
 
-When deploying on Vercel, ensure the following Environment Variables are configured in your Vercel Project Settings (**Settings** $\rightarrow$ **Environment Variables**):
+Run all verification gates before pushing code:
 
-| Key | Description | Example |
-|---|---|---|
-| `DATABASE_URL` | Neon pooled connection string with `pgbouncer=true` | `postgresql://user:pass@ep-xyz-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&pgbouncer=true` |
-| `DIRECT_URL` | Neon direct connection string (no pgbouncer) | `postgresql://user:pass@ep-xyz-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require` |
-| `JWT_SECRET` | Secret key for JWT session cookies | `your-secure-secret-key` |
-| `NEXT_PUBLIC_APP_URL` | Canonical public URL of your deployment | `https://exam-tracker-blue.vercel.app` |
+```bash
+# 1. Type Check
+npx tsc --noEmit
+
+# 2. Linting
+npm run lint
+
+# 3. Unit & Integration Tests
+npm test
+
+# 4. Production Build
+npm run build
+```
 
 ---
 
 ## 👤 Pre-configured Demo Accounts
 
 | Role | Email | Password | Pre-configured State |
-|---|---|---|---|
+| :--- | :--- | :--- | :--- |
 | **Fresher Aspirant** | `aspirant@bharatexam.in` | `Aspirant@123` | Enrolled in SSC CGL 2026 (Tier 1 admit card out, Shift 2 slot assigned) & IBPS PO 2026 (Prelims result available to test qualification). |
 | **Portal Officer (Admin)** | `admin@bharatexam.in` | `Admin@123` | Access to `/admin` to monitor sources, run crawler audits, review AI extractions, and broadcast corrigendums. |
 
