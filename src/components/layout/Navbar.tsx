@@ -118,12 +118,12 @@ export function Navbar() {
     router.refresh();
   };
 
-  const handleQuickLogin = async (email: string, pass: string) => {
+  const handleQuickLogin = async (demoRole: "aspirant" | "admin") => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: pass }),
+        body: JSON.stringify({ demoRole }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -351,12 +351,12 @@ export function Navbar() {
                         Demo Roles
                       </p>
                       {[
-                        { email: "aspirant@bharatexam.in", pass: "Aspirant@123", label: "Aspirant (Fresher)" },
-                        { email: "admin@bharatexam.in", pass: "Admin@123", label: "Admin (Officer)" },
-                      ].map(({ email, pass, label }) => (
+                        { role: "aspirant" as const, label: "Aspirant (Fresher)", email: "aspirant@bharatexam.in" },
+                        { role: "admin" as const, label: "Admin (Officer)", email: "admin@bharatexam.in" },
+                      ].map(({ role, label, email }) => (
                         <button
-                          key={email}
-                          onClick={() => handleQuickLogin(email, pass)}
+                          key={role}
+                          onClick={() => handleQuickLogin(role)}
                           role="menuitem"
                           className="w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors"
                         >

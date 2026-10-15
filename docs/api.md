@@ -35,8 +35,14 @@ Authentication utilizes secure HTTP-only cookies (`bharat_exam_session`).
 `POST /api/auth/login`
 ```json
 {
-  "email": "aspirant@bharatexam.in",
-  "password": "Aspirant@123"
+  "email": "user@example.com",
+  "password": "your-secure-password"
+}
+```
+*Or 1-click evaluation demo:*
+```json
+{
+  "demoRole": "aspirant"
 }
 ```
 

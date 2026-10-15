@@ -38,8 +38,8 @@ To configure your local development environment without exposing production secr
 2. Configure a local or development PostgreSQL database:
    ```env
    # Local PostgreSQL instance or free Neon development branch
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bharat_exam_dev?schema=public"
-   DIRECT_URL="postgresql://postgres:postgres@localhost:5432/bharat_exam_dev?schema=public"
+   DATABASE_URL="postgresql://<user>:<password>@localhost:5432/bharat_exam_dev?schema=public"
+   DIRECT_URL="postgresql://<user>:<password>@localhost:5432/bharat_exam_dev?schema=public"
 
    # Development JWT secret
    JWT_SECRET="local-development-secret-key-32-chars-minimum"

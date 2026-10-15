@@ -51,14 +51,14 @@ function LoginForm() {
     }
   };
 
-  const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
+  const handleDemoLogin = async (demoRole: "aspirant" | "admin") => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: demoEmail, password: demoPass }),
+        body: JSON.stringify({ demoRole }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Demo login failed");
@@ -100,7 +100,7 @@ function LoginForm() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleDemoLogin("aspirant@bharatexam.in", "Aspirant@123")}
+                onClick={() => handleDemoLogin("aspirant")}
                 className="p-2.5 rounded-lg bg-[var(--semantic-info-bg)] hover:bg-[rgba(59,130,246,0.18)] border border-[var(--semantic-info-border)] text-[var(--accent-400)] text-sm font-semibold flex flex-col items-center justify-center gap-1 transition-colors"
               >
                 <UserCheck className="w-4 h-4" />
@@ -108,7 +108,7 @@ function LoginForm() {
               </button>
               <button
                 type="button"
-                onClick={() => handleDemoLogin("admin@bharatexam.in", "Admin@123")}
+                onClick={() => handleDemoLogin("admin")}
                 className="p-2.5 rounded-lg bg-[var(--semantic-warning-bg)] hover:bg-[rgba(245,158,11,0.18)] border border-[var(--semantic-warning-border)] text-amber-400 text-sm font-semibold flex flex-col items-center justify-center gap-1 transition-colors"
               >
                 <ShieldCheck className="w-4 h-4" />

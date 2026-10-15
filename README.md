@@ -169,12 +169,14 @@ npm run build
 
 ## 👤 Pre-configured Demo Accounts
 
-| Role | Email | Password | Pre-configured State |
-| :--- | :--- | :--- | :--- |
-| **Fresher Aspirant** | `aspirant@bharatexam.in` | `Aspirant@123` | Enrolled in SSC CGL 2026 (Tier 1 admit card out, Shift 2 slot assigned) & IBPS PO 2026 (Prelims result available to test qualification). |
-| **Portal Officer (Admin)** | `admin@bharatexam.in` | `Admin@123` | Access to `/admin` to monitor sources, run crawler audits, review AI extractions, and broadcast corrigendums. |
+The platform includes pre-configured demo evaluation profiles accessible via **1-click buttons** on the `/login` page and the navigation menu:
 
-*(Also accessible via 1-click buttons on the `/login` page).*
+| Role | Access Method | Pre-configured State |
+| :--- | :--- | :--- |
+| **Fresher Aspirant** | Click **Aspirant** button | Enrolled in SSC CGL 2026 (Tier 1 admit card out, Shift 2 slot assigned) & IBPS PO 2026 (Prelims result available to test qualification). |
+| **Portal Officer (Admin)** | Click **Admin** button | Access to `/admin` to monitor sources, run crawler audits, review AI extractions, and broadcast corrigendums. |
+
+*(Instant access via 1-click evaluation buttons on `/login` or the demo role switcher in the profile menu).*
 
 ---
 

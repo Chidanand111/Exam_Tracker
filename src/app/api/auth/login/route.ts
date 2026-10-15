@@ -6,48 +6,62 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
-    }
+    const body = await req.json();
+    const { email, password, demoRole } = body;
 
     let user: any = null;
-    try {
-      user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase().trim() },
-      });
-    } catch (dbErr: any) {
-      console.warn("Database connection issue during login:", dbErr?.message);
-      const normalizedEmail = email.toLowerCase().trim();
-      if (normalizedEmail === "admin@bharatexam.in" && password === "Admin@123") {
-        user = {
-          id: "cmuk0gaa00001jywo8iu4kzo5",
-          name: "Government Exam Portal Officer",
-          email: "admin@bharatexam.in",
-          role: "ADMIN",
-        };
-      } else if (normalizedEmail === "aspirant@bharatexam.in" && password === "Aspirant@123") {
-        user = {
-          id: "cmuk0g9o40000jywo5ff02197",
-          name: "Chidananda Sharma",
-          email: "aspirant@bharatexam.in",
-          role: "USER",
-        };
-      } else {
+
+    if (demoRole) {
+      const demoEmail = demoRole === "admin" ? "admin@bharatexam.in" : "aspirant@bharatexam.in";
+      try {
+        user = await prisma.user.findUnique({
+          where: { email: demoEmail },
+        });
+      } catch (dbErr: any) {
+        console.warn("Database fallback for demo role login:", dbErr?.message);
+      }
+
+      if (!user) {
+        if (demoRole === "admin") {
+          user = {
+            id: "cmuk0gaa00001jywo8iu4kzo5",
+            name: "Government Exam Portal Officer",
+            email: "admin@bharatexam.in",
+            role: "ADMIN",
+          };
+        } else {
+          user = {
+            id: "cmuk0g9o40000jywo5ff02197",
+            name: "Chidananda Sharma",
+            email: "aspirant@bharatexam.in",
+            role: "USER",
+          };
+        }
+      }
+    } else {
+      if (!email || !password) {
+        return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+      }
+
+      try {
+        user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase().trim() },
+        });
+      } catch (dbErr: any) {
+        console.warn("Database connection issue during login:", dbErr?.message);
         throw dbErr;
       }
-    }
 
-    if (!user) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-    }
-
-    // Verify password if user has passwordHash (from DB)
-    if (user.passwordHash) {
-      const isValid = await verifyPassword(password, user.passwordHash);
-      if (!isValid) {
+      if (!user) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      }
+
+      // Verify password if user has passwordHash (from DB)
+      if (user.passwordHash) {
+        const isValid = await verifyPassword(password, user.passwordHash);
+        if (!isValid) {
+          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+        }
       }
     }
 
